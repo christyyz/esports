@@ -143,7 +143,7 @@ export default {
 #userLayout {
   width: 100%;
   height: 100vh;
-  background: url(../../assets/login_background.svg);
+  background: url(./img/login2.jpg);
   background-size: cover;
   position: relative;
   .topTitle {
@@ -155,7 +155,7 @@ export default {
     top: 30vh;
     right: 16vw;
     width: 300px;
-    background-color: #fff;
+    background-color: rgba(255, 255, 255, 0.7);
     padding: 40px 40px 40px 40px;
     border-radius: 10px;
     box-shadow: 2px 3px 7px rgba(0, 0, 0, 0.2);

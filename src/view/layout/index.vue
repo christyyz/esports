@@ -197,10 +197,10 @@ export default {
       this.bus.$emit('collapse', this.isCollapse)
     },
     LoginOut () {
-      // window.sessionStorage.clear()
-      // this.$router.push({
-      //   name: 'Login'
-      // })
+      window.sessionStorage.clear()
+      this.$router.push({
+        name: 'Login'
+      })
     },
     toPerson () {
       this.$router.push({
