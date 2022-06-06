@@ -1,7 +1,7 @@
 <template>
   <div id="userLayout">
     <div class="loginform">
-      <h2 class="topTitle">科研服务平台</h2>
+      <h2 class="topTitle">许可管理平台</h2>
       <el-form
         ref="loginForm"
         :model="loginForm"

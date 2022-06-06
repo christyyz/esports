@@ -43,6 +43,7 @@ export default {
 .typeCardList {
   display: flex;
   flex-wrap: wrap;
+  justify-content: space-evenly;
   color: #ffffff;
   border-bottom: 10px solid #eeeeee;
   .typeCard {

@@ -48,7 +48,7 @@
         <div id="activeRanking" class="activeRanking">
           <h3 style="paddingBottom:10px;borderBottom:2px solid #eeeeee"><span class="titleIcon"></span>订单排名</h3>
           <ul>
-            <li v-for="(item,index) in orderList" :key="index">
+            <li v-for="(item,index) in orderList" :key="index" class="activeRankingItem">
               <div>{{index + 1}}.{{item.title}}</div>
               <div>{{item.num}}</div>
             </li>
@@ -62,6 +62,9 @@
 <script>
 import { mapGetters } from 'vuex'
 import cardType from '@/components/cardType/index'
+var myChart1
+var myChart2
+var myChart3
 export default {
   name: 'workState',
   components: {
@@ -218,23 +221,30 @@ export default {
     } else {
       this.leftWidth = null
     }
-    this.$nextTick(()=>{
-      setTimeout(()=>{ 
+    this.bus.$on('collapse', item => {
+      setTimeout(() => {
+        console.log(12311);
         this.activeRateCharts()
         this.modelsRateCharts()
         this.activetimeCharts()
       },300)
     })
+    this.activeRateCharts()
+    this.modelsRateCharts()
+    this.activetimeCharts()
   },
   methods: {
     // toTarget(name) {
     //   this.$router.push({ name })
     // },
     activeRateCharts () {
+      if (myChart1 != null && myChart1 != "" && myChart1 != undefined) {
+        myChart1.dispose(); //销毁
+      }
       // 基于准备好的dom，初始化echarts实例
-      let myChart = this.$echarts.init(document.getElementById('activeRate'))
+      myChart1 = this.$echarts.init(document.getElementById('activeRate'))
       // 绘制图表
-      myChart.setOption({
+      myChart1.setOption({
         title: {
           text: '激活占比',
           left: 'center'
@@ -276,16 +286,19 @@ export default {
         ]
       })
       window.addEventListener('resize',function(){
-        if(myChart){
-             myChart.resize()   // 不报错
+        if(myChart1){
+             myChart1.resize()   // 不报错
         }
       })
     },
     modelsRateCharts () {
+      if (myChart2 != null && myChart2 != "" && myChart2 != undefined) {
+        myChart2.dispose(); //销毁
+      }
       // 基于准备好的dom，初始化echarts实例
-      let myChart = this.$echarts.init(document.getElementById('modelsRate'))
+      myChart2 = this.$echarts.init(document.getElementById('modelsRate'))
       // 绘制图表
-      myChart.setOption({
+      myChart2.setOption({
         title: {
           text: '机型占比',
           left: 'center'
@@ -330,16 +343,18 @@ export default {
         ]
       })
       window.addEventListener('resize',function(){
-        if(myChart){
-             myChart.resize()   // 不报错
+        if(myChart2){
+             myChart2.resize()   // 不报错
         }
       })
     },
     activetimeCharts () {
-      console.log(document.getElementById('activetime'),123123);
+      if (myChart3 != null && myChart3 != "" && myChart3 != undefined) {
+        myChart3.dispose(); //销毁
+      }
       // 基于准备好的dom，初始化echarts实例
-      let myChart = this.$echarts.init(document.getElementById('activetime')) // 绘制图表
-      myChart.setOption({
+      myChart3 = this.$echarts.init(document.getElementById('activetime')) // 绘制图表
+      myChart3.setOption({
         title: {
           text: '激活时间'
         },
@@ -408,8 +423,8 @@ export default {
         ]
       })
       window.addEventListener('resize',function(){
-        if(myChart){
-             myChart.resize()   // 不报错
+        if(myChart3){
+             myChart3.resize()   // 不报错
         }
       })
     }
@@ -474,10 +489,15 @@ export default {
         }
         li {
           padding: 10px 0;
+          cursor: pointer;
           list-style: none;
           display: flex;
           justify-content: space-between;
           border-bottom: 1px solid #cccccc;
+        }
+        li:hover {
+          background-color: #f1f3f4;
+          line-height: 25px;
         }
         li:last-child{
           border-bottom: 0
