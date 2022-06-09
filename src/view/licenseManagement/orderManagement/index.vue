@@ -84,6 +84,10 @@
           type="primary"
           @click="dialogFormVisible = true"
         >添加</el-button>
+        <el-button
+          type="primary"
+          @click="dialogFormVisible1 = true"
+        >导出</el-button>
       </div>
       <el-table
         :data="formData"
@@ -181,23 +185,56 @@
           <el-form-item label="客户名称：">
             <el-input v-model="orderForm.id"></el-input>
           </el-form-item>
-          <el-upload
-            class="upload-demo"
-            action="https://jsonplaceholder.typicode.com/posts/"
-            :on-preview="handlePreview"
-            :on-remove="handleRemove"
-            :before-remove="beforeRemove"
-            multiple
-            :limit="3"
-            :on-exceed="handleExceed"
-            :file-list="fileList">
-            设备：<el-button size="small" type="primary">点击上传</el-button>
-            <div slot="tip" class="el-upload__tip">只能excel上传文件，且不超过500kb</div>
-          </el-upload>
+          <el-row>
+            <el-form-item label="设备：">
+              <el-upload
+                class="upload-demo"
+                action="https://jsonplaceholder.typicode.com/posts/"
+                :on-preview="handlePreview"
+                :on-remove="handleRemove"
+                :before-remove="beforeRemove"
+                multiple
+                :limit="3"
+                :on-exceed="handleExceed"
+                :file-list="fileList">
+                <el-button size="small" type="primary">点击上传</el-button>
+                <div slot="tip" class="el-upload__tip">只能excel上传文件，且不超过500kb</div>
+              </el-upload>
+            </el-form-item>
+          </el-row>
         </el-form>
         <div slot="footer" class="dialog-footer">
           <el-button @click="dialogFormVisible = false">取 消</el-button>
           <el-button type="primary" @click="dialogFormVisible = false">确 定</el-button>
+        </div>
+      </el-dialog>
+      <el-dialog title="设备信息" :visible.sync="dialogFormVisible1">
+        <el-form :inline="true" :model="orderForm1" label-width="85px">
+          <el-row>
+            <el-form-item label="订单号：">
+              <el-input v-model="orderForm1.id"></el-input>
+            </el-form-item>
+          </el-row>
+          <el-row>
+            <el-form-item label="设备数量：">
+              <el-input-number v-model="orderForm1.num" :min="1" label="描述文字" style="width:210px"></el-input-number>
+            </el-form-item>
+          </el-row>
+          <el-row>
+            <el-form-item label="有效时间：">
+              <el-date-picker
+                v-model="orderForm1.time"
+                type="daterange"
+                range-separator="至"
+                start-placeholder="开始日期"
+                end-placeholder="结束日期">
+              </el-date-picker>
+            </el-form-item>
+          </el-row>
+        </el-form>
+        <div slot="footer" class="dialog-footer">
+          <el-button @click="dialogFormVisible1 = false">取 消</el-button>
+          <el-button type="primary" @click="dialogFormVisible1 = false">确 定</el-button>
         </div>
       </el-dialog>
     </div>
@@ -213,6 +250,7 @@ export default {
     return {
       table: false,
       dialogFormVisible: false,
+      dialogFormVisible1: false,
       formData: [
         {
           id: 1,
@@ -275,7 +313,10 @@ export default {
           name9: '松山'
         },
       ],
-      orderForm: [],
+      orderForm: {},
+      orderForm1: {
+        time:[]
+      },
       formInline: {},
       pickerOptions: {
         shortcuts: [{

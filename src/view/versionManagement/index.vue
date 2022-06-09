@@ -71,19 +71,21 @@
                 <el-input type="textarea" v-model="orderForm.id" style="width:500px"></el-input>
               </el-form-item>
             </el-row>
-          <el-upload
-            class="upload-demo"
-            action="https://jsonplaceholder.typicode.com/posts/"
-            :on-preview="handlePreview"
-            :on-remove="handleRemove"
-            :before-remove="beforeRemove"
-            multiple
-            :limit="3"
-            :on-exceed="handleExceed"
-            :file-list="fileList">
-            安装包：<el-button size="small" type="primary">点击上传</el-button>
-            <div slot="tip" class="el-upload__tip">只能excel上传文件，且不超过500kb</div>
-          </el-upload>
+            <el-form-item label="安装包：">
+              <el-upload
+                class="upload-demo"
+                action="https://jsonplaceholder.typicode.com/posts/"
+                :on-preview="handlePreview"
+                :on-remove="handleRemove"
+                :before-remove="beforeRemove"
+                multiple
+                :limit="3"
+                :on-exceed="handleExceed"
+                :file-list="fileList">
+                <el-button size="small" type="primary">点击上传</el-button>
+                <div slot="tip" class="el-upload__tip">只能excel上传文件，且不超过500kb</div>
+              </el-upload>
+            </el-form-item>
         </el-form>
         <div slot="footer" class="dialog-footer">
           <el-button @click="dialogFormVisible = false">取 消</el-button>

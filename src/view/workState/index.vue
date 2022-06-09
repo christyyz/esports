@@ -49,7 +49,7 @@
           <h3 style="paddingBottom:10px;borderBottom:2px solid #eeeeee"><span class="titleIcon"></span>订单排名</h3>
           <ul>
             <li v-for="(item,index) in orderList" :key="index" class="activeRankingItem">
-              <div>{{index + 1}}.{{item.title}}</div>
+              <div>{{item.title}}</div>
               <div>{{item.num}}</div>
             </li>
           </ul>
@@ -197,14 +197,6 @@ export default {
           title: '联想集团',
           num: 2000
         },
-        {
-          title: '联想集团',
-          num: 2000
-        },
-        {
-          title: '联想集团',
-          num: 2000
-        }
       ],
       leftWidth: '',
       value: '2021'
@@ -489,6 +481,7 @@ export default {
         }
         li {
           padding: 10px 0;
+          line-height: 28px;
           cursor: pointer;
           list-style: none;
           display: flex;
@@ -497,7 +490,7 @@ export default {
         }
         li:hover {
           background-color: #f1f3f4;
-          line-height: 25px;
+          line-height: 33px;
         }
         li:last-child{
           border-bottom: 0
