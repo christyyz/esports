@@ -21,6 +21,9 @@ const mixin = {
     back () {
       this.$router.go(-1)
     },
+    resetForm (formName) {
+      this.$refs[formName].resetFields();
+    },
     //设置单元格背景
     cellStyle({row, column, rowIndex, columnIndex}) {
         return 'height:35px!important; border-color:#cccccc!important; color:#000000!important; padding:0px!important; height:40px!important'

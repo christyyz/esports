@@ -1,6 +1,6 @@
 const faceConfig = () => {
   return {
-    basePath:'http://xf.tftend.com/apis/',
+    basePath:'https://healthcity.lenovo.com/lesports-service',
     filePath:'http://tfapi.tftend.com/'
     //  'http://tfapi.tftend.com/'
   }

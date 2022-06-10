@@ -72,4 +72,29 @@ const post = function (url,params) {
     })
   })
 }
-export default post
+const get = function (url,params) {
+  // const token = store.getters['token']
+  const token = localStorage.getItem("token");
+
+  // console.log(token);
+  const data = {...params,token:token}
+  return new Promise(( resolve,reject )=>{
+    service({
+      method: 'get',
+      url: '/apis' + url,
+      data: data
+    }).then((res)=>{
+      if (res.status === 200) {
+        resolve(res.data)
+      } else {
+        console.log(res,'error')
+        this.$message({
+          message: res.statusText,
+          type: "error",
+        });
+        reject(res)
+      }
+    })
+  })
+}
+export {post, get}

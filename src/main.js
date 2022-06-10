@@ -4,7 +4,7 @@ import ElementUI from 'element-ui';
 import 'element-ui/lib/theme-chalk/index.css';
 import store from './store'
 import  * as echarts  from "echarts";
-import post from './util/require'
+import {post, get} from './util/require'
 import router from './router'
 import moment from 'moment'
 import less from 'less'
@@ -23,6 +23,7 @@ Vue.config.productionTip = false
 Vue.prototype.$echarts = echarts;
 Vue.prototype.$moment = moment
 Vue.prototype.$post = post
+Vue.prototype.$get = get
 
 new Vue({
   router,
