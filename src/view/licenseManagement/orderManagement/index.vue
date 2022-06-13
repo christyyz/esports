@@ -176,10 +176,10 @@
         :total="total"
       >
       </el-pagination>
-      <el-dialog title="设备信息" :visible.sync="dialogFormVisible">
+      <el-dialog :title="title" :visible.sync="dialogFormVisible">
         <el-form :inline="true" :model="orderForm" :rules="rules" label-width="100px" ref="orderForm">
           <el-form-item label="订单号：" prop="orderFormNo">
-            <el-input v-model="orderForm.orderFormNo" :disabled="disabled"></el-input>
+            <el-input v-model="orderForm.orderFormNo" :disabled="disabled || flag == 'edit'"></el-input>
           </el-form-item>
           <el-form-item label="项目名称：" prop="projectName">
             <el-input v-model="orderForm.projectName" :disabled="disabled"></el-input>
@@ -196,17 +196,18 @@
           <el-form-item label="创建时间：" prop="createTime">
             <el-date-picker
               v-model="orderForm.createTime"
+              :disabled="disabled"
               type="date" 
               placeholder="选择日期">
             </el-date-picker>
           </el-form-item>
-          <el-row v-if="!execlData">
+          <el-row v-if="execlData.length < 1">
             <el-form-item label="设备详情：">
               <uploadExecl :limit="1" :showFileList="false" @uploadExcelData="uploadExcelData" :disabled="disabled"></uploadExecl>
             </el-form-item>
           </el-row>
           <el-table :data="execlData"
-                    v-if="execlData"
+                    v-if="execlData.length > 0"
                     height="300"
                     style="width: 100%">
             <el-table-column prop="deviceName"
@@ -220,27 +221,29 @@
             </el-table-column>
           </el-table>
         </el-form>
-        <div slot="footer" class="dialog-footer">
+        <div slot="footer" class="dialog-footer" v-if="flag !=='look'">
           <el-button @click="dialogFormVisible = false">取 消</el-button>
+          <el-button type="primary" @click="submitOrderForm1('orderForm','add')" v-if="flag === 'add'">暂存</el-button>
           <el-button type="primary" @click="submitOrderForm('orderForm')">确 定</el-button>
+          <el-button type="primary" @click="submitOrderForm1('orderForm','edit')" v-if="flag === 'edit'">确 定</el-button>
         </div>
       </el-dialog>
       <el-dialog title="设备信息" :visible.sync="dialogFormVisible1">
-        <el-form :inline="true" :model="orderForm1" label-width="85px">
+        <el-form :inline="true" :model="orderFormExport" label-width="85px">
           <el-row>
             <el-form-item label="订单号：">
-              <el-input v-model="orderForm1.id"></el-input>
+              <el-input v-model="orderFormExport.id"></el-input>
             </el-form-item>
           </el-row>
           <el-row>
             <el-form-item label="设备数量：">
-              <el-input-number v-model="orderForm1.num" :min="1" label="描述文字" style="width:210px"></el-input-number>
+              <el-input-number v-model="orderFormExport.num" :min="1" label="描述文字" style="width:210px"></el-input-number>
             </el-form-item>
           </el-row>
           <el-row>
             <el-form-item label="有效时间：">
               <el-date-picker
-                v-model="orderForm1.time"
+                v-model="orderFormExport.time"
                 type="daterange"
                 range-separator="至"
                 start-placeholder="开始日期"
@@ -251,7 +254,7 @@
         </el-form>
         <div slot="footer" class="dialog-footer">
           <el-button @click="dialogFormVisible1 = false">取 消</el-button>
-          <el-button type="primary" @click="submitOrderForm1('orderForm1')">确 定</el-button>
+          <el-button type="primary" @click="submitorderFormExport('orderFormExport')">确 定</el-button>
         </div>
       </el-dialog>
     </div>
@@ -270,6 +273,8 @@ export default {
   data () {
     return {
       id: '',
+      flag: '',
+      title: '',
       table: false,
       disabled: false,
       dialogFormVisible: false,
@@ -284,7 +289,7 @@ export default {
         createTime: ''
       },
       execlData: [],
-      orderForm1: {
+      orderFormExport: {
         time:[]
       },
       searchForm: {},
@@ -328,7 +333,7 @@ export default {
         deviceNumber: [
           { required: true, message: '请输入设备数量', trigger: 'blur' }
         ],
-        createPeoper: [
+        createPerson: [
           { required: true, message: '请输入创建人', trigger: 'blur' }
         ],
         createTime: [
@@ -338,7 +343,7 @@ export default {
       }
     }
   },
-  mounted () {
+   mounted () {
     this.getListData()
   },
   methods: {
@@ -371,50 +376,66 @@ export default {
       this.orderForm = {}
       this.execlData = []
     },
-    resetOrderForm1(){
-      this.orderForm1 = {}
+    resetorderFormExport(){
+      this.orderFormExport = {}
     },
     submitOrderForm(formName){
       this.$refs[formName].validate(async (valid) => {
           if (valid) {
-            if (this.execlData.length > 0) {
+            if (this.execlData.length > 0 && this.execlData.length === this.orderForm.deviceNumber) {
               const params = { ...this.orderForm, orderItemsVo: this.execlData, id: this.id}
               console.log(params, 'params');
-              const res = this.$post('/order/add',params)
+              const res = this.$post('/order/uploadexcel',params)
               this.getListData()
               this.dialogFormVisible = false
               this.resetOrderForm()
               console.log(res, 'res');
             } else {
-              this.$message.error('请上传设备信息')
+              this.$message.error('请上传设备信息,并保证与设备数量相同')
             }
           }
       });
     },
-    submitOrderForm1(formName){
+    submitOrderForm1(formName,flag){
       this.$refs[formName].validate(async (valid) => {
           if (valid) {
-            const res = this.$post('/order/add',this.orderForm1)
+            const url = (flag == 'add'?'/order/add':'order/update')
+            const res = await this.$post(url,this.orderForm)
             console.log(res);
             this.dialogFormVisible1 = false
-            this.resetOrderForm1()
+            this.resetorderFormExport()
+          }
+      });
+    },
+    submitorderFormExport(formName){
+      this.$refs[formName].validate(async (valid) => {
+          if (valid) {
+            const res = await this.$post('/order/add',this.orderFormExport)
+            console.log(res);
+            this.dialogFormVisible1 = false
+            this.resetorderFormExport()
           }
       });
     },
     addOrderForm () {
       this.id = ''
+      this.flag = 'add'
+      this.title = '新增订单信息'
       this.orderForm = {}
       this.execlData = ''
       this.disabled = false
       this.dialogFormVisible = true
       this.getNowTime()
     },
-    lookFormItem(e,item){
+    async lookFormItem(e,item){
       console.log(item);
+      this.flag = e
+      const MAClist = await this.$get('/orderitems/getall',{orderFormNo:item.orderFormNo})
       this.disabled = (e == 'look')
+      this.title = (e == 'look'?'查看订单信息':'修改订单信息')
       this.id = item.id
       this.orderForm = item
-      this.execlData = item.orderItemsVo
+      this.execlData = MAClist
       this.dialogFormVisible = true
     }
   }

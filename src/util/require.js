@@ -1,11 +1,11 @@
 import axios from 'axios' // 引入axios
 import { Message } from 'element-ui'
 // import { store } from '@/store'
-// import { basePath } from './base.js'
+import { basePath } from './base.js'
 // import { MessageBox } from 'element-ui'
 
 const service = axios.create({
-  // baseURL: basePath,
+  baseURL: basePath,
   timeout: 99999
 })
 
@@ -56,7 +56,8 @@ const post = function (url,params) {
   return new Promise(( resolve,reject )=>{
     service({
       method: 'post',
-      url: '/apis' + url,
+      // url: '/apis' + url,
+      url: url,
       data: data
     }).then((res)=>{
       if (res.data.code === 0) {
@@ -81,8 +82,9 @@ const get = function (url,params) {
   return new Promise(( resolve,reject )=>{
     service({
       method: 'get',
-      url: '/apis' + url,
-      data: data
+      // url: '/apis' + url,
+      url: url,
+      params: data
     }).then((res)=>{
       if (res.status === 200) {
         resolve(res.data)
