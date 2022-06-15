@@ -47,7 +47,7 @@ service.interceptors.request.use(
     return error
   }
 )
-const post = function (url,params) {
+const post = function (url,params,config) {
   // const token = store.getters['token']
   const token = localStorage.getItem("token");
 
@@ -58,10 +58,12 @@ const post = function (url,params) {
       method: 'post',
       // url: '/apis' + url,
       url: url,
-      data: data
+      data: data,
+      onUploadProgress: config
     }).then((res)=>{
-      if (res.data.code === 0) {
-        resolve(res)
+      console.log(res,'post');
+      if (res.data.code == 200) {
+        resolve(res.data)
       } else {
         console.log(res,'error')
         this.$message({
@@ -86,12 +88,13 @@ const get = function (url,params) {
       url: url,
       params: data
     }).then((res)=>{
-      if (res.status === 200) {
-        resolve(res.data)
+      console.log(res,'get');
+      if (res.data.code == 200) {
+        resolve(res.data.data)
       } else {
         console.log(res,'error')
         this.$message({
-          message: res.statusText,
+          message: res.data.msg,
           type: "error",
         });
         reject(res)

@@ -36,15 +36,15 @@
               class="selectMode"
               v-if="!isUpDown"
             >
-              <el-form-item label="创建人" prop="createPerson">
+              <el-form-item label="创建人" prop="createdBy">
                 <el-input
-                  v-model="searchForm.createPerson"
+                  v-model="searchForm.createdBy"
                   placeholder="创建人"
                 ></el-input>
               </el-form-item>
-              <el-form-item label="创建时间" prop="createTime">
+              <el-form-item label="创建时间" prop="createdDate">
                 <el-date-picker
-                  v-model="searchForm.createTime"
+                  v-model="searchForm.createdDate"
                   type="daterange"
                   align="right"
                   unlink-panels
@@ -99,10 +99,27 @@
         :header-cell-style="{background:'#cbe4ff',color:'black',borderColor:'#cccccc'}"
       >
         <el-table-column
-          prop="orderFormNo"
+          label="序号"
+          width="50">
+          <template slot-scope="scope">
+            <span>{{scope.$index + 1 + ((pager.currentPage - 1) * pager.countPerPage)}}</span>
+          </template>
+        </el-table-column>
+        <!-- <el-table-column
+          label="序号"
+          width="80"
+        >
+          <template slot-scope="scope">
+            <span></span>
+          </template>
+        </el-table-column> -->
+        <el-table-column
           label="订单号"
           width="150"
         >
+          <template slot-scope="scope">
+            <a href="javascript:;" @click="routerModels(scope.row.orderFormNo)">{{scope.row.orderFormNo}}</a>
+          </template>
         </el-table-column>
         <el-table-column
           prop="projectName"
@@ -125,21 +142,24 @@
         <el-table-column
           prop="name3"
           label="激活设备数"
-          width="150"
+          width="120"
         >
           --
         </el-table-column>
         <el-table-column
-          prop="createPerson"
+          prop="createdBy"
           label="创建人"
           width="120"
         >
         </el-table-column>
         <el-table-column
-          prop="createTime"
+          prop="createdDate"
           label="创建时间"
           width="200"
         >
+          <template slot-scope="scope">
+            <span>{{creatTime(scope.row.createdDate)}}</span>
+          </template>
         </el-table-column>
         <el-table-column label="操作">
           <template slot-scope="scope">
@@ -167,11 +187,12 @@
       </el-table>
       <el-pagination
         class="com-pagination"
-        @size-change="search"
-        @current-change="search"
+        background
+        @size-change="getTableData"
+        @current-change="getTableData"
         :page-sizes="[10, 20, 30, 40, 50, 100]"
-        :current-page.sync="pager.page"
-        :page-size.sync="pager.limit"
+        :current-page.sync="pager.currentPage"
+        :page-size.sync="pager.countPerPage"
         layout="total, sizes, prev, pager, next, jumper"
         :total="total"
       >
@@ -188,19 +209,19 @@
             <el-input v-model="orderForm.customerName" :disabled="disabled"></el-input>
           </el-form-item>
           <el-form-item label="设备数量：" prop="deviceNumber">
-            <el-input v-model="orderForm.deviceNumber" :disabled="disabled"></el-input>
+            <el-input-number v-model="orderForm.deviceNumber" :disabled="disabled" :min="1" style="width:205px"></el-input-number>
           </el-form-item>
-          <el-form-item label="创建人：" prop="createPerson">
-            <el-input v-model="orderForm.createPerson" :disabled="disabled"></el-input>
+          <el-form-item label="创建人：" prop="createdBy">
+            <el-input v-model="orderForm.createdBy" :disabled="disabled"></el-input>
           </el-form-item>
-          <el-form-item label="创建时间：" prop="createTime">
+          <!-- <el-form-item label="创建时间：" prop="createdDate">
             <el-date-picker
-              v-model="orderForm.createTime"
+              v-model="orderForm.createdDate"
               :disabled="disabled"
               type="date" 
               placeholder="选择日期">
             </el-date-picker>
-          </el-form-item>
+          </el-form-item> -->
           <el-row v-if="execlData.length < 1">
             <el-form-item label="设备详情：">
               <uploadExecl :limit="1" :showFileList="false" @uploadExcelData="uploadExcelData" :disabled="disabled"></uploadExecl>
@@ -209,7 +230,9 @@
           <el-table :data="execlData"
                     v-if="execlData.length > 0"
                     height="300"
-                    style="width: 100%">
+                    style="width: 100%"
+                    :cell-style="cellStyle"
+                    :header-cell-style="{background:'#cbe4ff',color:'black',borderColor:'#cccccc'}">
             <el-table-column prop="deviceName"
                              label="设备名称">
             </el-table-column>
@@ -223,8 +246,8 @@
         </el-form>
         <div slot="footer" class="dialog-footer" v-if="flag !=='look'">
           <el-button @click="dialogFormVisible = false">取 消</el-button>
-          <el-button type="primary" @click="submitOrderForm1('orderForm','add')" v-if="flag === 'add'">暂存</el-button>
-          <el-button type="primary" @click="submitOrderForm('orderForm')">确 定</el-button>
+          <!-- <el-button type="primary" @click="submitOrderForm1('orderForm','add')" v-if="flag === 'add'">暂存</el-button> -->
+          <el-button type="primary" @click="submitOrderForm('orderForm')" v-if="flag === 'add'">确 定</el-button>
           <el-button type="primary" @click="submitOrderForm1('orderForm','edit')" v-if="flag === 'edit'">确 定</el-button>
         </div>
       </el-dialog>
@@ -263,6 +286,7 @@
 
 <script>
 import mixin from '@/mixins'
+import moment from 'moment'
 import uploadExecl from '@/components/uploadExecl/index'
 export default {
   name: 'licenseManagement',
@@ -285,8 +309,8 @@ export default {
         projectName: '',
         customerName: '',
         deviceNumber: '',
-        createPerson: '',
-        createTime: ''
+        createdBy: '',
+        createdDate: ''
       },
       execlData: [],
       orderFormExport: {
@@ -333,22 +357,25 @@ export default {
         deviceNumber: [
           { required: true, message: '请输入设备数量', trigger: 'blur' }
         ],
-        createPerson: [
+        createdBy: [
           { required: true, message: '请输入创建人', trigger: 'blur' }
         ],
-        createTime: [
+        createdDate: [
           { required: true, message: '请输入创建时间', trigger: 'blur' }
         ],
         
       }
     }
   },
-   mounted () {
-    this.getListData()
+  mounted () {
+    this.getTableData()
   },
   methods: {
-    async getListData () {
-      this.formData = await this.$get('/order/getall')
+    creatTime (e) {
+      return moment(e).format('YYYY-MM-DD HH:mm:s')
+    },
+    getTableData () {
+      this.getListData('/order/getall')
     },
     getNowTime() {
        var now = new Date();
@@ -359,16 +386,8 @@ export default {
        month = month.toString().padStart(2, "0");
        date = date.toString().padStart(2, "0");
        var defaultDate = `${year}-${month}-${date}`;
-       this.$set(this.orderForm, "createTime", defaultDate);
+       this.$set(this.orderForm, "createdDate", defaultDate);
    },
-    add () {
-      this.$router.push({
-        name: 'orderManagement',
-        params: {
-          flag: 'add'
-        }
-      })
-    },
     uploadExcelData(e){
       this.execlData = e
     },
@@ -379,19 +398,36 @@ export default {
     resetorderFormExport(){
       this.orderFormExport = {}
     },
+    routerModels (item) {
+      this.$router.push({
+        name: 'modelsManagement',
+        params: {
+          orderFormNo: item
+        }
+      })
+    },
     submitOrderForm(formName){
       this.$refs[formName].validate(async (valid) => {
           if (valid) {
-            if (this.execlData.length > 0 && this.execlData.length === this.orderForm.deviceNumber) {
-              const params = { ...this.orderForm, orderItemsVo: this.execlData, id: this.id}
+            console.log(this.execlData.length,this.orderForm.deviceNumber );
+            if (this.execlData.length > 0 && this.execlData.length == this.orderForm.deviceNumber) {
+              const params = { ...this.orderForm, orderItemsVos: this.execlData, id: this.id}
               console.log(params, 'params');
               const res = this.$post('/order/uploadexcel',params)
-              this.getListData()
+              if (res.code == 200) {
+                this.$message({
+                  message: '添加成功',
+                  type: "success",
+                });
+                this.getTableData()
+              }
               this.dialogFormVisible = false
               this.resetOrderForm()
               console.log(res, 'res');
+            } else if(this.execlData.length > 0 && this.execlData.length != this.orderForm.deviceNumber) {
+              this.$message.error('请确定设备数量与设备详情数相同')
             } else {
-              this.$message.error('请上传设备信息,并保证与设备数量相同')
+              this.$message.error('请上传设备详情')
             }
           }
       });
@@ -402,7 +438,14 @@ export default {
             const url = (flag == 'add'?'/order/add':'order/update')
             const res = await this.$post(url,this.orderForm)
             console.log(res);
-            this.dialogFormVisible1 = false
+            if (res.code == 200) {
+              this.$message({
+                message: flag == 'add'?'暂存成功':'修改成功',
+                type: "success",
+              });
+              this.getTableData()
+            }
+            this.dialogFormVisible = false
             this.resetorderFormExport()
           }
       });
@@ -410,7 +453,8 @@ export default {
     submitorderFormExport(formName){
       this.$refs[formName].validate(async (valid) => {
           if (valid) {
-            const res = await this.$post('/order/add',this.orderFormExport)
+            const params = { ...this.orderForm, id: this.id}
+            const res = await this.$post('/order/add',params)
             console.log(res);
             this.dialogFormVisible1 = false
             this.resetorderFormExport()
@@ -434,7 +478,7 @@ export default {
       this.disabled = (e == 'look')
       this.title = (e == 'look'?'查看订单信息':'修改订单信息')
       this.id = item.id
-      this.orderForm = item
+      this.changeFormData(this.orderForm, item)
       this.execlData = MAClist
       this.dialogFormVisible = true
     }

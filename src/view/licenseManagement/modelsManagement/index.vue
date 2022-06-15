@@ -4,25 +4,25 @@
       <el-col :span="18">
         <el-form
           :inline="true"
-          :model="formInline"
+          :model="searchForm"
           class="demo-form-inline"
           label-width="85px"
         >
           <el-form-item label="订单号">
             <el-input
-              v-model="formInline.id"
+              v-model="searchForm.orderFormNo"
               placeholder="订单号"
             ></el-input>
           </el-form-item>
           <el-form-item label="项目名称">
             <el-input
-              v-model="formInline.subjectName"
+              v-model="searchForm.projectName"
               placeholder="项目名称"
             ></el-input>
           </el-form-item>
           <el-form-item label="设备型号">
             <el-input
-              v-model="formInline.modelType"
+              v-model="searchForm.modelNo"
               placeholder="设备型号"
             ></el-input>
           </el-form-item>
@@ -37,19 +37,19 @@
             >
               <el-form-item label="MAC地址">
                 <el-input
-                  v-model="formInline.MACaddress"
+                  v-model="searchForm.macAddr"
                   placeholder="MAC地址"
                 ></el-input>
               </el-form-item>
               <el-form-item label="当前状态">
-                  <el-select v-model="formInline.state" placeholder="请选择" style="width:200px">
+                  <el-select v-model="searchForm.status" placeholder="请选择" style="width:200px">
+                    <el-option label="未激活" :value="0"></el-option>
                     <el-option label="已激活" :value="1"></el-option>
-                    <el-option label="未激活" :value="2"></el-option>
                   </el-select>
               </el-form-item>
               <el-form-item label="创建时间">
                 <el-date-picker
-                  v-model="formInline.time"
+                  v-model="searchForm.createTime"
                   type="daterange"
                   align="right"
                   unlink-panels
@@ -96,6 +96,13 @@
       :header-cell-style="{background:'#cbe4ff',color:'black',borderColor:'#ccccccc'}"
     >
       <el-table-column
+        label="序号"
+        width="50">
+        <template slot-scope="scope">
+          <span>{{scope.$index + 1 + ((pager.currentPage - 1) * pager.countPerPage)}}</span>
+        </template>
+      </el-table-column>
+      <el-table-column
         prop="orderFormNo"
         label="订单号"
         width="120"
@@ -120,10 +127,12 @@
       >
       </el-table-column>
       <el-table-column
-        prop="status"
         label="当前状态"
         width="120"
       >
+        <template slot-scope="scope">
+          <span>{{scope.row.status == '0'?'未激活':'已激活'}}</span>
+        </template>
       </el-table-column>
       <el-table-column
         prop="createTime"
@@ -157,11 +166,12 @@
     </el-table>
     <el-pagination
       class="com-pagination"
-      @size-change="search"
-      @current-change="search"
+      background
+      @size-change="getTableData"
+      @current-change="getTableData"
       :page-sizes="[10, 20, 30, 40, 50, 100]"
-      :current-page.sync="pager.page"
-      :page-size.sync="pager.limit"
+      :current-page.sync="pager.currentPage"
+      :page-size.sync="pager.countPerPage"
       layout="total, sizes, prev, pager, next, jumper"
       :total="total"
     >
@@ -182,18 +192,18 @@
         </el-form-item>
         <el-form-item label="当前状态：" prop="status">
           <el-select v-model="modelsForm.status" placeholder="请选择" style="width:205px" :disabled="flag == 'look'">
-            <el-option label="已激活" value="已激活"></el-option>
-            <el-option label="未激活" value="未激活"></el-option>
+            <el-option label="未激活" value="0"></el-option>
+            <el-option label="已激活" value="1"></el-option>
           </el-select>
         </el-form-item>
-        <el-form-item label="创建时间：" prop="createTime">
+        <!-- <el-form-item label="创建时间：" prop="createTime">
             <el-date-picker
               v-model="modelsForm.createTime"
               :disabled="flag == 'look'"
               type="date" 
               placeholder="选择日期">
             </el-date-picker>
-        </el-form-item>
+        </el-form-item> -->
       </el-form>
       <div slot="footer" class="dialog-footer" v-if="flag !== 'look'">
         <el-button @click="dialogFormVisible = false">取 消</el-button>
@@ -205,12 +215,13 @@
 
 <script>
 import mixin from '@/mixins'
+import moment from 'moment'
 export default {
   name: 'modelsManagement',
   mixins: [mixin],
   data () {
     return {
-      formInline: {},
+      searchForm: {},
       modelsForm: {
         orderFormNo: '',
         deviceName: '',
@@ -219,44 +230,7 @@ export default {
         status: '',
         createTime: '',
       },
-      formData: [
-        {
-          id: 1,
-          orderFormNo: '1331113331',
-          deviceName: '爱电竞1',
-          modelNo: '拯救者刃7000K',
-          macAddr: '44-45-53-54-00-00',
-          status: '已激活',
-          createTime: '2022-05-27 11:00:00',
-        },
-        {
-          id: 2,
-          orderFormNo: '1331113332',
-          deviceName: '爱电竞2',
-          modelNo: '天逸510S',
-          macAddr: '44-45-53-54-00-01',
-          status: '已激活',
-          createTime: '2022-05-27 11:10:00'
-        },
-        {
-          id: 3,
-          orderFormNo: '1331113333',
-          deviceName: '爱电竞3',
-          modelNo: '扬天M400q',
-          macAddr: '44-45-53-54-00-02',
-          status: '已激活',
-          createTime: '2022-05-27 11:20:00'
-        },
-        {
-          id: 4,
-          orderFormNo: '1331113334',
-          deviceName: '爱电竞4',
-          modelNo: '天逸510pro',
-          macAddr: '44-45-53-54-00-03',
-          status: '未激活',
-          createTime: '2022-05-27 11:30:00'
-        }
-      ],
+      formData: [],
       dialogFormVisible: false,
       flag: '',
       rules: {
@@ -282,7 +256,15 @@ export default {
       }
     }
   },
+  mounted () {
+    const {params} = this.$route
+    this.changeFormData(this.searchForm, params)
+    this.getTableData()
+  },
   methods: {
+    getTableData () {
+      this.getListData('/orderitems/getall')
+    },
     getNowTime() {
        var now = new Date();
        var year = now.getFullYear(); //得到年份
@@ -303,15 +285,24 @@ export default {
     orderitemsEdit(flag,item) {
       this.id = item.id
       this.flag = flag
-      this.modelsForm = item
+      this.changeFormData(this.modelsForm, item)
+      // this.modelsForm = item
       this.dialogFormVisible = true
     },
     modelsFormSubmit (formName) {
       this.$refs[formName].validate(async (valid) => {
           if (valid) {
+            const params = { ...this.modelsForm, id: this.id }
             const url = (this.flag == 'add'?'/orderitems/add':'/orderitems/update')
-            const res = await this.$post(url,this.modelsForm)
+            const res = await this.$post(url,params)
             console.log(res);
+            if (res.code == 200) {
+              this.$message({
+                message: this.flag == 'add'?'新增成功':'修改成功',
+                type: "success",
+              });
+              this.getTableData()
+            }
             this.dialogFormVisible = false
           }
       });

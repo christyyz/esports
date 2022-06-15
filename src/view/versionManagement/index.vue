@@ -72,7 +72,7 @@
               </el-form-item>
             </el-row>
             <el-form-item label="安装包：">
-              <el-upload
+              <!-- <el-upload
                 class="upload-demo"
                 action="https://jsonplaceholder.typicode.com/posts/"
                 :on-preview="handlePreview"
@@ -84,7 +84,19 @@
                 :file-list="fileList">
                 <el-button size="small" type="primary">点击上传</el-button>
                 <div slot="tip" class="el-upload__tip">只能excel上传文件，且不超过500kb</div>
+              </el-upload> -->
+              <el-upload
+                action="#"
+                class="upload-demo"
+                :file-list="fileList"
+                :on-change="changeData"
+                :http-request="handleRequest"
+                :before-upload="beforeUpload">
+                <el-button class="btn upload-btn">点击上传</el-button>
+                <div slot="tip" class="el-upload__tip">上传文件大小不超过50M</div>
               </el-upload>
+              <el-progress :stroke-width="14" :percentage="progressPercent" style="width:200px"></el-progress>
+
             </el-form-item>
         </el-form>
         <div slot="footer" class="dialog-footer">
@@ -103,6 +115,7 @@ export default {
   data() {
     return {
       dialogFormVisible: false,
+      progressPercent: 0,
       formInline: {},
       orderForm: {},
       tableData: [
@@ -167,18 +180,33 @@ export default {
     }
   },
   methods: {
-    handleRemove(file, fileList) {
-      console.log(file, fileList);
-    },
-    handlePreview(file) {
+    beforeUpload(file) {
       console.log(file);
+        const isLt2M = file.size / 1024 / 1024 < 50;
+        if (!isLt2M) {
+          this.$message.error('上传文件大小大小不能超过 50MB!');
+          return isLt2M;
+        }
     },
-    handleExceed(files, fileList) {
-      this.$message.warning(`当前限制选择 3 个文件，本次选择了 ${files.length} 个文件，共选择了 ${files.length + fileList.length} 个文件`);
+    changeData (file, fileList) {
+        // 数据小于0.1M的时候按KB显示
+        const size = file.size/1024/1024 > 0.1 ? `(${(file.size/1024/1024).toFixed(1)}M)` : `(${(file.size/1024).toFixed(1)}KB)`
+        file.name.indexOf('M')>-1 || file.name.indexOf('KB')>-1 ? file.name : file.name += size
     },
-    beforeRemove(file, fileList) {
-      return this.$confirm(`确定移除 ${ file.name }？`);
-    }
+
+    async handleRequest (data) {
+        let formdata = new FormData()
+        formdata.append('file', data.file)
+        const config = {
+          onUploadProgress: progressEvent => {
+            // progressEvent.loaded:已上传文件大小
+            // progressEvent.total:被上传文件的总大小
+            this.progressPercent = Number((progressEvent.loaded / progressEvent.total * 100).toFixed(2))
+          }
+        }
+        const res = await this.$post(this.actionURL,formdata,config)
+        console.log(res);
+    },
   }
 }
 </script>
