@@ -63,7 +63,7 @@
         <el-button
           size="medium"
           type="primary"
-          @click="onSubmit"
+          @click="getTableData"
         >查询</el-button>
         <el-button
           size="medium"
@@ -87,14 +87,15 @@
         >添加</el-button>
         <el-button
           type="primary"
-          @click="dialogFormVisible1 = true"
+          @click="addOrderFormExport"
         >导出</el-button>
       </div>
       <el-table
         :data="formData"
         stripe
         border
-        style="width: 100%"
+        style="width: 100%" 
+        :empty-text="loadInfo"
         :cell-style="cellStyle"
         :header-cell-style="{background:'#cbe4ff',color:'black',borderColor:'#cccccc'}"
       >
@@ -153,7 +154,6 @@
         >
         </el-table-column>
         <el-table-column
-          prop="createdDate"
           label="创建时间"
           width="200"
         >
@@ -209,11 +209,11 @@
             <el-input v-model="orderForm.customerName" :disabled="disabled"></el-input>
           </el-form-item>
           <el-form-item label="设备数量：" prop="deviceNumber">
-            <el-input-number v-model="orderForm.deviceNumber" :disabled="disabled" :min="1" style="width:205px"></el-input-number>
+            <el-input-number v-model="orderForm.deviceNumber" :disabled="disabled || flag == 'edit'" :min="1" style="width:205px"></el-input-number>
           </el-form-item>
-          <el-form-item label="创建人：" prop="createdBy">
+          <!-- <el-form-item label="创建人：" prop="createdBy">
             <el-input v-model="orderForm.createdBy" :disabled="disabled"></el-input>
-          </el-form-item>
+          </el-form-item> -->
           <!-- <el-form-item label="创建时间：" prop="createdDate">
             <el-date-picker
               v-model="orderForm.createdDate"
@@ -246,12 +246,12 @@
         </el-form>
         <div slot="footer" class="dialog-footer" v-if="flag !=='look'">
           <el-button @click="dialogFormVisible = false">取 消</el-button>
-          <!-- <el-button type="primary" @click="submitOrderForm1('orderForm','add')" v-if="flag === 'add'">暂存</el-button> -->
+          <el-button type="primary" @click="submitOrderForm1('orderForm','add')" v-if="flag === 'add'">暂存</el-button>
           <el-button type="primary" @click="submitOrderForm('orderForm')" v-if="flag === 'add'">确 定</el-button>
           <el-button type="primary" @click="submitOrderForm1('orderForm','edit')" v-if="flag === 'edit'">确 定</el-button>
         </div>
       </el-dialog>
-      <el-dialog title="设备信息" :visible.sync="dialogFormVisible1">
+      <el-dialog title="订单导出" :visible.sync="dialogFormVisible1">
         <el-form :inline="true" :model="orderFormExport" label-width="85px">
           <el-row>
             <el-form-item label="订单号：">
@@ -274,10 +274,16 @@
               </el-date-picker>
             </el-form-item>
           </el-row>
+          <el-row type="flex" justify="" >
+            <el-form-item label="许可ID：">
+              <el-input v-model="orderFormExport.license" disabled></el-input>
+            </el-form-item>
+          </el-row>
         </el-form>
         <div slot="footer" class="dialog-footer">
           <el-button @click="dialogFormVisible1 = false">取 消</el-button>
-          <el-button type="primary" @click="submitorderFormExport('orderFormExport')">确 定</el-button>
+          <el-button type="primary" @click="getLicense">许可生成</el-button>
+          <el-button type="primary" @click="submitorderFormExport('orderFormExport')" :disabled="!orderFormExport.license">确 定</el-button>
         </div>
       </el-dialog>
     </div>
@@ -419,8 +425,8 @@ export default {
                   message: '添加成功',
                   type: "success",
                 });
-                this.getTableData()
               }
+              this.getTableData()
               this.dialogFormVisible = false
               this.resetOrderForm()
               console.log(res, 'res');
@@ -443,8 +449,8 @@ export default {
                 message: flag == 'add'?'暂存成功':'修改成功',
                 type: "success",
               });
-              this.getTableData()
             }
+            this.getTableData()
             this.dialogFormVisible = false
             this.resetorderFormExport()
           }
@@ -481,6 +487,13 @@ export default {
       this.changeFormData(this.orderForm, item)
       this.execlData = MAClist
       this.dialogFormVisible = true
+    },
+    getLicense () {
+
+    },
+    addOrderFormExport () {
+      this.dialogFormVisible1 = true
+      this.orderFormExport = {}
     }
   }
 }

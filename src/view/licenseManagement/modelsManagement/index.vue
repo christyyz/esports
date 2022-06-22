@@ -43,13 +43,14 @@
               </el-form-item>
               <el-form-item label="当前状态">
                   <el-select v-model="searchForm.status" placeholder="请选择" style="width:200px">
-                    <el-option label="未激活" :value="0"></el-option>
-                    <el-option label="已激活" :value="1"></el-option>
+                    <el-option label="未激活" value="0"></el-option>
+                    <el-option label="已激活" value="1"></el-option>
+                    <el-option label="已停止" value="2"></el-option>
                   </el-select>
               </el-form-item>
               <el-form-item label="创建时间">
                 <el-date-picker
-                  v-model="searchForm.createTime"
+                  v-model="searchForm.createdDate"
                   type="daterange"
                   align="right"
                   unlink-panels
@@ -68,7 +69,7 @@
         <el-button
           size="medium"
           type="primary"
-          @click="onSubmit"
+          @click="getTableData"
         >查询</el-button>
         <el-button
           size="medium"
@@ -92,6 +93,7 @@
       :data="formData"
       stripe
       border
+      :empty-text="loadInfo"
       style="width: 100%"
       :header-cell-style="{background:'#cbe4ff',color:'black',borderColor:'#ccccccc'}"
     >
@@ -111,7 +113,8 @@
       <el-table-column
         prop="deviceName"
         label="设备名称"
-        width="120"
+        width="140"
+        :show-overflow-tooltip="true"
       >
       </el-table-column>
       <el-table-column
@@ -131,14 +134,16 @@
         width="120"
       >
         <template slot-scope="scope">
-          <span>{{scope.row.status == '0'?'未激活':'已激活'}}</span>
+          <span>{{scope.row.status | statusName}}</span>
         </template>
       </el-table-column>
       <el-table-column
-        prop="createTime"
         label="创建日期"
         width="200"
       >
+          <template slot-scope="scope">
+            <span>{{creatTime(scope.row.createdDate)}}</span>
+          </template>
       </el-table-column>
       <el-table-column label="操作">
         <template slot-scope="scope">
@@ -148,13 +153,13 @@
             @click="orderitemsEdit('edit',scope.row)"
           >修改</el-button>
           <el-popconfirm
-            title="确定删除该设备吗？"
+            title="确定停止该设备吗？"
           >
             <el-button
               size="mini"
               type="warning"
               style="margin: 0 10px"
-              slot="reference">删除</el-button>
+              slot="reference">停止</el-button>
           </el-popconfirm>
           <el-button
             size="mini"
@@ -179,7 +184,7 @@
     <el-dialog title="设备信息" :visible.sync="dialogFormVisible">
       <el-form :inline="true" :model="modelsForm" label-width="100px" :rules="rules" ref="modelsForm">
         <el-form-item label="订单号：" prop="orderFormNo">
-          <el-input v-model="modelsForm.orderFormNo" :disabled="flag == 'look'"></el-input>
+          <el-input v-model="modelsForm.orderFormNo" :disabled="flag == 'look' || flag == 'edit'"></el-input>
         </el-form-item>
         <el-form-item label="设备名称：" prop="deviceName">
           <el-input v-model="modelsForm.deviceName" :disabled="flag == 'look'"></el-input>
@@ -194,11 +199,12 @@
           <el-select v-model="modelsForm.status" placeholder="请选择" style="width:205px" :disabled="flag == 'look'">
             <el-option label="未激活" value="0"></el-option>
             <el-option label="已激活" value="1"></el-option>
+            <el-option label="已停止" value="2"></el-option>
           </el-select>
         </el-form-item>
-        <!-- <el-form-item label="创建时间：" prop="createTime">
+        <!-- <el-form-item label="创建时间：" prop="createdDate">
             <el-date-picker
-              v-model="modelsForm.createTime"
+              v-model="modelsForm.createdDate"
               :disabled="flag == 'look'"
               type="date" 
               placeholder="选择日期">
@@ -228,7 +234,7 @@ export default {
         modelNo: '',
         macAddr: '',
         status: '',
-        createTime: '',
+        createdDate: '',
       },
       formData: [],
       dialogFormVisible: false,
@@ -249,11 +255,28 @@ export default {
         status: [
           { required: true, message: '请选择当前状态', trigger: 'blur' }
         ],
-        createTime: [
+        createdDate: [
           { required: true, message: '请输入创建时间', trigger: 'blur' }
         ],
         
       }
+    }
+  },
+  filters: {
+    statusName(item){
+      let statusName = ''
+      switch (item) {
+        case '0':
+          statusName = '未激活'
+          break;
+        case '1':
+          statusName = '已激活'
+          break;
+        case '2':
+          statusName = '已停止'
+          break;
+      }
+      return statusName
     }
   },
   mounted () {
@@ -262,6 +285,9 @@ export default {
     this.getTableData()
   },
   methods: {
+    creatTime (e) {
+      return moment(e).format('YYYY-MM-DD HH:mm:s')
+    },
     getTableData () {
       this.getListData('/orderitems/getall')
     },
@@ -274,7 +300,7 @@ export default {
        month = month.toString().padStart(2, "0");
        date = date.toString().padStart(2, "0");
        var defaultDate = `${year}-${month}-${date}`;
-       this.$set(this.orderForm, "createTime", defaultDate);
+       this.$set(this.orderForm, "createdDate", defaultDate);
    },
     orderitemsAdd() {
       this.flag = 'add'

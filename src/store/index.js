@@ -97,11 +97,27 @@ export const store = new Vuex.Store({
             {
               "ID": 4444,
               "parentId": 222,
+              "path": "/licenseList",
+              "name": "licenseList",
+              "hidden": false,
+              "component": () => import("@/view/licenseManagement/licenseList/index.vue"),
+              "sort": 2,
+              "meta": {
+                "keepAlive": false,
+                "defaultMenu": false,
+                "title": "许可列表",
+                "icon": "cloudy",
+                "closeTab": false
+              },
+            },
+            {
+              "ID": 5555,
+              "parentId": 222,
               "path": "/modelsManagement",
               "name": "modelsManagement",
               "hidden": false,
               "component": () => import("@/view/licenseManagement/modelsManagement/index.vue"),
-              "sort": 2,
+              "sort": 3,
               "meta": {
                 "keepAlive": false,
                 "defaultMenu": false,

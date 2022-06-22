@@ -3,6 +3,7 @@ const mixin = {
     return {
       isUpDown: true,
       total: 0,
+      loadInfo: '暂无数据',
       pager: {
         currentPage: 1,
         countPerPage: 10
@@ -40,13 +41,18 @@ const mixin = {
       }
     },
     async getListData (url) {
+      this.loadInfo = '数据加载中...'
       const params = {
         ...this.searchForm,
+        createdDateStart: this.searchForm.createdDate?this.searchForm.createdDate[0]:null,
+        createdDateEnd: this.searchForm.createdDate?this.searchForm.createdDate[1]:null,
+        createdDate: null,
         currentPage: this.pager.currentPage - 1,
         countPerPage: this.pager.countPerPage,
       }
       const res = await this.$get(url,params)
       this.formData = res.pageData
+      this.loadInfo = '暂无数据'
       this.total = res.totalElements
     },
   },
