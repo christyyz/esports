@@ -134,7 +134,9 @@
         width="120"
       >
         <template slot-scope="scope">
-          <span>{{scope.row.status | statusName}}</span>
+          <el-button size="mini" type="primary" v-if="scope.row.status == '0' || !scope.row.status">待激活</el-button>
+          <el-button size="mini" type="success" v-if="scope.row.status == '1'" disabled>已激活</el-button>
+          <el-button size="mini" type="danger" v-if="scope.row.status == '2'" disabled>已停止</el-button>
         </template>
       </el-table-column>
       <el-table-column
@@ -264,7 +266,7 @@ export default {
   },
   filters: {
     statusName(item){
-      let statusName = ''
+      let statusName = '未激活'
       switch (item) {
         case '0':
           statusName = '未激活'

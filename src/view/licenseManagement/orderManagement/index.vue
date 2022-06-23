@@ -141,11 +141,10 @@
         >
         </el-table-column>
         <el-table-column
-          prop="name3"
+          prop="activedCount"
           label="激活设备数"
           width="120"
         >
-          --
         </el-table-column>
         <el-table-column
           prop="createdBy"
