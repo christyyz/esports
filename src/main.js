@@ -1,5 +1,6 @@
 import Vue from 'vue'
 import App from './App.vue'
+import qs from 'qs'
 import ElementUI from 'element-ui';
 import 'element-ui/lib/theme-chalk/index.css';
 import store from './store'
@@ -24,6 +25,7 @@ Vue.prototype.$echarts = echarts;
 Vue.prototype.$moment = moment
 Vue.prototype.$post = post
 Vue.prototype.$get = get
+Vue.prototype.$qs = qs
 
 new Vue({
   router,

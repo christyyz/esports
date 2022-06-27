@@ -75,23 +75,23 @@ export default {
       cardList: [
         {
           id: '1',
-          title1: '以激活设备',
+          title1: '订单数',
           num: 1000
         },
         {
           id: '2',
-          title1: '未激活设备',
-          num: 1500
-        },
-        {
-          id: '3',
           title1: '设备总数',
           num: 2500
         },
         {
-          id: '4',
-          title1: '订单数',
+          id: '3',
+          title1: '已激活设备',
           num: 1000
+        },
+        {
+          id: '4',
+          title1: '未激活设备',
+          num: 1500
         },
       ],
       // toolCards: [

@@ -1,8 +1,10 @@
+import moment from 'moment'
 const mixin = {
   data() {
     return {
       isUpDown: true,
       total: 0,
+      multipleSelection: [],
       loadInfo: '暂无数据',
       pager: {
         currentPage: 1,
@@ -11,6 +13,9 @@ const mixin = {
     }
   },
   methods: {
+    handleSelectionChange(val) {
+      this.multipleSelection = val;
+    },
 
     onUpDown () {
       this.isUpDown = !this.isUpDown
@@ -25,9 +30,6 @@ const mixin = {
     back () {
       this.$router.go(-1)
     },
-    resetForm (formName) {
-      this.$refs[formName].resetFields();
-    },
     //设置单元格背景
     cellStyle({row, column, rowIndex, columnIndex}) {
         return 'height:35px!important; border-color:#cccccc!important; color:#000000!important; padding:0px!important; height:40px!important'
@@ -41,14 +43,46 @@ const mixin = {
       }
     },
     async getListData (url) {
+      // orderFormNo
+      // projectName
+      // customerName
+      // createdBy
+      // createdDate
+      // orderFormNo
+      // projectName
+      // modelNo
+      // macAddr
+      // status
+      // createdDate
       this.loadInfo = '数据加载中...'
-      const params = {
+      console.log(this.searchForm);
+      let searchForm = {
         ...this.searchForm,
-        createdDateStart: this.searchForm.createdDate?this.searchForm.createdDate[0]:null,
-        createdDateEnd: this.searchForm.createdDate?this.searchForm.createdDate[1]:null,
-        createdDate: null,
+        createdDate: this.searchForm.createdDate.length > 0 ? [moment(this.searchForm.createdDate[0]).format('YYYYMMDD'),moment(this.searchForm.createdDate[1]).format('YYYYMMDD')] : ''
+      }
+      console.log(searchForm, 'searchForm123');
+      let searchStr = ''
+      if (JSON.stringify(searchForm) !== '{}') {
+        for (let i in searchForm) {
+          console.log(i);
+          if (searchForm[i]) {
+            if (i == 'projectName' || i == 'customerName') {
+              console.log(searchForm, searchForm[i]);
+              searchStr += `${i}:${searchForm[i]}`
+            } else if (i == 'createdDate') {
+              console.log(searchForm[i]);
+              searchStr += searchForm[i].length > 0 ? `${searchForm[i][0]}<createdDate<${searchForm[i][1]}` : ''
+            } else {
+              searchStr += `${i}=${searchForm[i]}`
+            }
+          }
+        }
+      }
+      console.log(searchStr,'searchStr');
+      const params = {
         currentPage: this.pager.currentPage - 1,
         countPerPage: this.pager.countPerPage,
+        search: JSON.stringify(searchForm) !== '{}'? searchStr : null
       }
       const res = await this.$get(url,params)
       this.formData = res.pageData

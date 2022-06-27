@@ -4,6 +4,7 @@ import { Message } from 'element-ui'
 import { basePath } from './base.js'
 // import { MessageBox } from 'element-ui'
 
+axios.defaults.headers.post['Content-Type'] = 'application/x-www-form-urlencoded;charset=UTF-8'
 const service = axios.create({
   baseURL: basePath,
   timeout: 99999

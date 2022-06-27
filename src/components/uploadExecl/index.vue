@@ -48,11 +48,25 @@ export default {
     }
   },
   methods: {
+    changeName(arr, names) {
+      const newArr = [];
+      arr.forEach((item) => {
+        const objL = Object.entries(item);
+        objL.forEach((ite, i) => {
+          if (names[i] === undefined) return;
+          ite[0] = names[i];
+        });
+        item = Object.fromEntries(objL);
+        newArr.push(item);
+      });
+      return newArr;
+    },
     generateData({header, results}) {
-        this.excelData.header = header;
-        this.excelData.results = results;
-        console.log(this.excelData, '数据列表');
-        this.$emit('uploadExcelData', this.excelData.results);
+        // this.excelData.header = header;
+        // this.excelData.results = results;
+        const execlList = this.changeName(results,['deviceName','modelNo','macAddr'])
+        console.log(execlList, '数据列表');
+        this.$emit('uploadExcelData', execlList);
         this.fileList = [];
     },
     uploadFileList(file) {

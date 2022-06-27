@@ -11,19 +11,19 @@
         >
           <el-form-item label="订单号" prop="orderFormNo">
             <el-input
-              v-model="searchForm.orderFormNo"
+              v-model.trim="searchForm.orderFormNo"
               placeholder="订单号"
             ></el-input>
           </el-form-item>
           <el-form-item label="项目名称" prop="projectName">
             <el-input
-              v-model="searchForm.projectName"
+              v-model.trim="searchForm.projectName"
               placeholder="项目名称"
             ></el-input>
           </el-form-item>
           <el-form-item label="客户名称" prop="customerName">
             <el-input
-              v-model="searchForm.customerName"
+              v-model.trim="searchForm.customerName"
               placeholder="客户名称"
             ></el-input>
           </el-form-item>
@@ -38,7 +38,7 @@
             >
               <el-form-item label="创建人" prop="createdBy">
                 <el-input
-                  v-model="searchForm.createdBy"
+                  v-model.trim="searchForm.createdBy"
                   placeholder="创建人"
                 ></el-input>
               </el-form-item>
@@ -87,7 +87,6 @@
         >添加</el-button>
         <el-button
           type="primary"
-          @click="addOrderFormExport"
         >导出</el-button>
       </div>
       <el-table
@@ -97,8 +96,13 @@
         style="width: 100%" 
         :empty-text="loadInfo"
         :cell-style="cellStyle"
+        @selection-change="handleSelectionChange"
         :header-cell-style="{background:'#cbe4ff',color:'black',borderColor:'#cccccc'}"
       >
+        <el-table-column
+          type="selection"
+          width="55">
+        </el-table-column>
         <el-table-column
           label="序号"
           width="50">
@@ -119,7 +123,7 @@
           width="150"
         >
           <template slot-scope="scope">
-            <a href="javascript:;" @click="routerModels(scope.row.orderFormNo)">{{scope.row.orderFormNo}}</a>
+            <a href="javascript:;" @click="routerModels(scope.row)">{{scope.row.orderFormNo}}</a>
           </template>
         </el-table-column>
         <el-table-column
@@ -141,10 +145,21 @@
         >
         </el-table-column>
         <el-table-column
-          prop="activedCount"
           label="激活设备数"
           width="120"
         >
+          <template slot-scope="scope">
+            <a href="javascript:;" @click="routerModels(scope.row)">{{scope.row.activedCount}}</a>
+          </template>
+        </el-table-column>
+        <el-table-column
+          label="许可id"
+          width="220"
+        >
+          <template slot-scope="scope">
+            <span v-if="scope.row.macAddr">{{scope.row.macAddr}}</span>
+            <el-button type="primary" size="mini" @click="addOrderFormExport(scope.row)">许可生成</el-button>
+          </template>
         </el-table-column>
         <el-table-column
           prop="createdBy"
@@ -160,7 +175,7 @@
             <span>{{creatTime(scope.row.createdDate)}}</span>
           </template>
         </el-table-column>
-        <el-table-column label="操作">
+        <el-table-column label="操作" fixed="right" width="200">
           <template slot-scope="scope">
           <el-button
             size="mini"
@@ -222,9 +237,10 @@
             </el-date-picker>
           </el-form-item> -->
           <el-row v-if="execlData.length < 1">
-            <el-form-item label="设备详情：">
+            <el-form-item label="设备详情：">   
               <uploadExecl :limit="1" :showFileList="false" @uploadExcelData="uploadExcelData" :disabled="disabled"></uploadExecl>
             </el-form-item>
+            <el-link icon="el-icon-warning" href="licenseVersion/static/设备信息模板.xlsx" target="_blank">模板下载</el-link>
           </el-row>
           <el-table :data="execlData"
                     v-if="execlData.length > 0"
@@ -254,12 +270,12 @@
         <el-form :inline="true" :model="orderFormExport" label-width="85px">
           <el-row>
             <el-form-item label="订单号：">
-              <el-input v-model="orderFormExport.id"></el-input>
+              <el-input v-model="orderFormExport.orderFormNo" disabled></el-input>
             </el-form-item>
           </el-row>
           <el-row>
             <el-form-item label="设备数量：">
-              <el-input-number v-model="orderFormExport.num" :min="1" label="描述文字" style="width:210px"></el-input-number>
+              <el-input-number v-model="orderFormExport.deviceNumber" :min="1" label="描述文字" style="width:210px" disabled></el-input-number>
             </el-form-item>
           </el-row>
           <el-row>
@@ -321,7 +337,13 @@ export default {
       orderFormExport: {
         time:[]
       },
-      searchForm: {},
+      searchForm: {
+        orderFormNo: '',
+        projectName: '',
+        customerName: '',
+        createdBy: '',
+        createdDate: []
+      },
       pickerOptions: {
         shortcuts: [{
           text: '最近一周',
@@ -380,7 +402,13 @@ export default {
       return moment(e).format('YYYY-MM-DD HH:mm:s')
     },
     getTableData () {
+      console.log(this.searchForm);
       this.getListData('/order/getall')
+    },
+    resetForm (formName) {
+      this.$refs[formName].resetFields();
+      this.searchForm.createdDate = []
+      this.getTableData()
     },
     getNowTime() {
        var now = new Date();
@@ -407,7 +435,8 @@ export default {
       this.$router.push({
         name: 'modelsManagement',
         params: {
-          orderFormNo: item
+          orderFormNo: item.orderFormNo,
+          status: '1'
         }
       })
     },
@@ -479,7 +508,11 @@ export default {
     async lookFormItem(e,item){
       console.log(item);
       this.flag = e
-      const MAClist = await this.$get('/orderitems/getall',{orderFormNo:item.orderFormNo})
+      const MAClist = await this.$get('/orderitems/getall',{
+        currentPage: this.pager.currentPage - 1,
+        countPerPage: this.pager.countPerPage,
+        search:`orderFormNo:${item.orderFormNo}`}
+      )
       this.disabled = (e == 'look')
       this.title = (e == 'look'?'查看订单信息':'修改订单信息')
       this.id = item.id
@@ -490,9 +523,9 @@ export default {
     getLicense () {
 
     },
-    addOrderFormExport () {
+    addOrderFormExport (item) {
       this.dialogFormVisible1 = true
-      this.orderFormExport = {}
+      this.orderFormExport = item
     }
   }
 }

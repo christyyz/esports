@@ -54,10 +54,11 @@
                   type="daterange"
                   align="right"
                   unlink-panels
+                  format="yyyyMMdd"
+                  value-format="yyyyMMdd"
                   range-separator="-"
                   start-placeholder="开始日期"
                   end-placeholder="结束日期"
-                  :picker-options="pickerOptions"
                 >
                 </el-date-picker>
               </el-form-item>
@@ -74,7 +75,7 @@
         <el-button
           size="medium"
           type="primary"
-          @click="onSubmit"
+          @click="resetForm('searchForm')"
         >重置</el-button>
         <el-button
           size="medium"
@@ -88,6 +89,7 @@
     <div style="marginBottom:10px">
       <el-button type="primary" @click="orderitemsAdd">新增</el-button>
       <el-button type="primary">导出</el-button>
+      <el-button type="primary" style="float:right" :disabled="multipleSelection.length < 1">激活</el-button>
     </div>
     <el-table
       :data="formData"
@@ -95,8 +97,13 @@
       border
       :empty-text="loadInfo"
       style="width: 100%"
+      @selection-change="handleSelectionChange"
       :header-cell-style="{background:'#cbe4ff',color:'black',borderColor:'#ccccccc'}"
     >
+      <el-table-column
+        type="selection"
+        width="55">
+      </el-table-column>
       <el-table-column
         label="序号"
         width="50">
@@ -134,9 +141,9 @@
         width="120"
       >
         <template slot-scope="scope">
-          <el-button size="mini" type="primary" v-if="scope.row.status == '0' || !scope.row.status">待激活</el-button>
-          <el-button size="mini" type="success" v-if="scope.row.status == '1'" disabled>已激活</el-button>
-          <el-button size="mini" type="danger" v-if="scope.row.status == '2'" disabled>已停止</el-button>
+          <el-button size="mini" type="primary" v-if="scope.row.status == '0' || !scope.row.status" @click="changeStatus(scope.row)">待激活</el-button>
+          <el-button size="mini" type="success" v-if="scope.row.status == '1'">已激活</el-button>
+          <el-button size="mini" type="danger" v-if="scope.row.status == '2'">已停止</el-button>
         </template>
       </el-table-column>
       <el-table-column
@@ -229,7 +236,14 @@ export default {
   mixins: [mixin],
   data () {
     return {
-      searchForm: {},
+      searchForm: {
+        orderFormNo: '',
+        projectName: '',
+        modelNo: '',
+        macAddr: '',
+        status: '',
+        createdDate: []
+      },
       modelsForm: {
         orderFormNo: '',
         deviceName: '',
@@ -285,6 +299,7 @@ export default {
     const {params} = this.$route
     this.changeFormData(this.searchForm, params)
     this.getTableData()
+    console.log(this.multipleSelection);
   },
   methods: {
     creatTime (e) {
@@ -292,6 +307,11 @@ export default {
     },
     getTableData () {
       this.getListData('/orderitems/getall')
+    },
+    resetForm (formName) {
+      this.$refs[formName].resetFields();
+      this.searchForm.createdDate = []
+      this.getTableData()
     },
     getNowTime() {
        var now = new Date();
@@ -316,6 +336,17 @@ export default {
       this.changeFormData(this.modelsForm, item)
       // this.modelsForm = item
       this.dialogFormVisible = true
+    },
+    async changeStatus(item) {
+      const params = {...item, status: 1}
+      const res = await this.$post('/orderitems/update',params)
+      if (res.code == 200) {
+        this.$message({
+          message: '激活成功',
+          type: "success",
+        });
+        this.getTableData()
+      }
     },
     modelsFormSubmit (formName) {
       this.$refs[formName].validate(async (valid) => {
