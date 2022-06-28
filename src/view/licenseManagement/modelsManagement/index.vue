@@ -87,9 +87,9 @@
       </el-col>
     </el-row>
     <div style="marginBottom:10px">
-      <el-button type="primary" @click="orderitemsAdd">新增</el-button>
-      <el-button type="primary">导出</el-button>
-      <el-button type="primary" style="float:right" :disabled="multipleSelection.length < 1">激活</el-button>
+      <!-- <el-button type="primary" @click="orderitemsAdd">新增</el-button> -->
+      <el-button type="primary" @click="exportTable">导出</el-button>
+      <el-button type="primary" style="float:right" :disabled="multipleSelection.length < 1" @click="changeStatueList">激活</el-button>
     </div>
     <el-table
       :data="formData"
@@ -231,6 +231,7 @@
 <script>
 import mixin from '@/mixins'
 import moment from 'moment'
+import * as XLSX from 'xlsx'
 export default {
   name: 'modelsManagement',
   mixins: [mixin],
@@ -312,6 +313,60 @@ export default {
       this.$refs[formName].resetFields();
       this.searchForm.createdDate = []
       this.getTableData()
+    },
+    statusName(item){
+      let statusName = '未激活'
+      switch (item) {
+        case '0':
+          statusName = '未激活'
+          break;
+        case '1':
+          statusName = '已激活'
+          break;
+        case '2':
+          statusName = '已停止'
+          break;
+      }
+      return statusName
+    },
+    exportTable () {
+      const exportList = []
+      if (this.multipleSelection.length > 0) {
+        const subName = ['num','orderFormNo','deviceName','modelNo','macAddr','status','createdDate']
+        const Header = [['序号','订单号','设备名称','设备型号','MAC地址','当前状态','创建时间']]
+        this.multipleSelection.forEach((item,index) => {
+          let exportItem = {}
+          subName.forEach(item1 => {
+            if (item1 == 'num') {
+              exportItem[item1] = index + 1
+            } else if (item1 === 'status') {
+              exportItem[item1] = this.statusName(item[item1])
+            } else if (item1 === 'createdDate') {
+              exportItem[item1] = moment(item.createdDate).format('YYYY-MM-DD')
+            } else {
+              exportItem[item1] = item[item1]
+            }
+          })
+          exportList.push(exportItem)
+        })
+        console.log(exportList,'1211');
+        // 将JS数据数组转换为工作表。
+        const headerWs = XLSX.utils.aoa_to_sheet(Header);
+        const ws = XLSX.utils.sheet_add_json(headerWs, exportList, {skipHeader: true, origin: 'A2'});
+        console.log(ws,'ws');
+
+        /* 新建空的工作表 */
+        const wb = XLSX.utils.book_new();
+
+        // 可以自定义下载之后的sheetname
+        XLSX.utils.book_append_sheet(wb, ws, '订单数据');
+
+        /* 生成xlsx文件 */
+        XLSX.writeFile(wb, '订单表格.xlsx');
+      }
+    },
+    changeStatueList () {
+      this.multipleSelection
     },
     getNowTime() {
        var now = new Date();

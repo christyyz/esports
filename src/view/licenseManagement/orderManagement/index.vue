@@ -87,6 +87,7 @@
         >添加</el-button>
         <el-button
           type="primary"
+          @click="exportTable"
         >导出</el-button>
       </div>
       <el-table
@@ -240,7 +241,7 @@
             <el-form-item label="设备详情：">   
               <uploadExecl :limit="1" :showFileList="false" @uploadExcelData="uploadExcelData" :disabled="disabled"></uploadExecl>
             </el-form-item>
-            <el-link icon="el-icon-warning" href="licenseVersion/static/设备信息模板.xlsx" target="_blank">模板下载</el-link>
+            <el-link icon="el-icon-warning" href="https://healthcity.lenovo.com/static/demo.xlsx" target="_blank">模板下载</el-link>
           </el-row>
           <el-table :data="execlData"
                     v-if="execlData.length > 0"
@@ -298,7 +299,7 @@
         <div slot="footer" class="dialog-footer">
           <el-button @click="dialogFormVisible1 = false">取 消</el-button>
           <el-button type="primary" @click="getLicense">许可生成</el-button>
-          <el-button type="primary" @click="submitorderFormExport('orderFormExport')" :disabled="!orderFormExport.license">确 定</el-button>
+          <!-- <el-button type="primary" @click="submitorderFormExport('orderFormExport')" :disabled="!orderFormExport.license">确 定</el-button> -->
         </div>
       </el-dialog>
     </div>
@@ -308,6 +309,7 @@
 <script>
 import mixin from '@/mixins'
 import moment from 'moment'
+import * as XLSX from 'xlsx'
 import uploadExecl from '@/components/uploadExecl/index'
 export default {
   name: 'licenseManagement',
@@ -410,6 +412,42 @@ export default {
       this.searchForm.createdDate = []
       this.getTableData()
     },
+    exportTable () {
+      const exportList = []
+      if (this.multipleSelection.length > 0) {
+        const subName = ['num','orderFormNo','projectName','customerName','deviceNumber','activedCount','macAddr','createdBy','createdDate']
+        const Header = [['序号','订单号','项目名称','客户名称','设备总数','激活设备数','许可id','创建人','创建时间']]
+        this.multipleSelection.forEach((item,index) => {
+          let exportItem = {}
+          subName.forEach(item1 => {
+            if (item1 == 'num') {
+              exportItem[item1] = index + 1
+            } else if (item1 === 'macAddr') {
+              exportItem[item1] = item[item1] || '--'
+            } else if (item1 === 'createdDate') {
+              exportItem[item1] = moment(item.createdDate).format('YYYY-MM-DD')
+            } else {
+              exportItem[item1] = item[item1]
+            }
+          })
+          exportList.push(exportItem)
+        })
+        console.log(exportList,'1211');
+        // 将JS数据数组转换为工作表。
+        const headerWs = XLSX.utils.aoa_to_sheet(Header);
+        const ws = XLSX.utils.sheet_add_json(headerWs, exportList, {skipHeader: true, origin: 'A2'});
+        console.log(ws,'ws');
+
+        /* 新建空的工作表 */
+        const wb = XLSX.utils.book_new();
+
+        // 可以自定义下载之后的sheetname
+        XLSX.utils.book_append_sheet(wb, ws, '订单数据');
+
+        /* 生成xlsx文件 */
+        XLSX.writeFile(wb, '订单表格.xlsx');
+      }
+    },
     getNowTime() {
        var now = new Date();
        var year = now.getFullYear(); //得到年份
@@ -508,16 +546,16 @@ export default {
     async lookFormItem(e,item){
       console.log(item);
       this.flag = e
-      const MAClist = await this.$get('/orderitems/getall',{
-        currentPage: this.pager.currentPage - 1,
-        countPerPage: this.pager.countPerPage,
-        search:`orderFormNo:${item.orderFormNo}`}
-      )
+      // const MAClist = await this.$get('/orderitems/getall',{
+      //   currentPage: this.pager.currentPage - 1,
+      //   countPerPage: this.pager.countPerPage,
+      //   search:`orderFormNo:${item.orderFormNo}`}
+      // )
       this.disabled = (e == 'look')
       this.title = (e == 'look'?'查看订单信息':'修改订单信息')
       this.id = item.id
       this.changeFormData(this.orderForm, item)
-      this.execlData = MAClist
+      // this.execlData = MAClist
       this.dialogFormVisible = true
     },
     getLicense () {
