@@ -87,7 +87,7 @@
       </el-col>
     </el-row>
     <div style="marginBottom:10px">
-      <!-- <el-button type="primary" @click="orderitemsAdd">新增</el-button> -->
+      <el-button type="primary" @click="orderitemsAdd">新增</el-button>
       <el-button type="primary" @click="exportTable">导出</el-button>
       <el-button type="primary" style="float:right" :disabled="multipleSelection.length < 1" @click="changeStatueList">激活</el-button>
     </div>
@@ -190,6 +190,39 @@
       :total="total"
     >
     </el-pagination>
+    <el-dialog title="新增设备" :visible.sync="dialogAddFormVisible">
+      <el-form :inline="true" :model="modelsAddForm" label-width="100px" :rules="rules" ref="modelsAddForm">
+        <el-form-item label="订单号：" prop="orderFormNo">
+          <el-input v-model="modelsAddForm.orderFormNo" :disabled="flag == 'look' || flag == 'edit'"></el-input>
+        </el-form-item>
+          <el-row>
+            <el-form-item label="设备详情：">   
+              <uploadExecl :limit="1" :showFileList="false" @uploadExcelData="uploadExcelData"></uploadExecl>
+            </el-form-item>
+            <el-link icon="el-icon-warning" href="https://healthcity.lenovo.com/static/demo.xlsx" target="_blank">模板下载</el-link>
+          </el-row>
+          <el-table :data="execlData"
+                    v-if="execlData.length > 0"
+                    height="300"
+                    style="width: 100%"
+                    :cell-style="cellStyle"
+                    :header-cell-style="{background:'#cbe4ff',color:'black',borderColor:'#cccccc'}">
+            <el-table-column prop="deviceName"
+                             label="设备名称">
+            </el-table-column>
+            <el-table-column prop="modelNo"
+                             label="设备类型">
+            </el-table-column>
+            <el-table-column prop="macAddr"
+                             label="MAC地址">
+            </el-table-column>
+          </el-table>
+      </el-form>
+      <div slot="footer" class="dialog-footer" v-if="flag !== 'look'">
+        <el-button @click="dialogAddFormVisible = false">取 消</el-button>
+        <el-button type="primary" @click="modelsAddFormSubmit('modelsForm')">确 定</el-button>
+      </div>
+    </el-dialog>
     <el-dialog title="设备信息" :visible.sync="dialogFormVisible">
       <el-form :inline="true" :model="modelsForm" label-width="100px" :rules="rules" ref="modelsForm">
         <el-form-item label="订单号：" prop="orderFormNo">
@@ -232,9 +265,13 @@
 import mixin from '@/mixins'
 import moment from 'moment'
 import * as XLSX from 'xlsx'
+import uploadExecl from '@/components/uploadExecl/index'
 export default {
   name: 'modelsManagement',
   mixins: [mixin],
+  components: {
+    uploadExecl
+  },
   data () {
     return {
       searchForm: {
@@ -253,8 +290,13 @@ export default {
         status: '',
         createdDate: '',
       },
+      modelsAddForm: {
+        orderFormNo: '',
+      },
+      execlData: [],
       formData: [],
       dialogFormVisible: false,
+      dialogAddFormVisible: false,
       flag: '',
       rules: {
         orderFormNo: [
@@ -308,6 +350,9 @@ export default {
     },
     getTableData () {
       this.getListData('/orderitems/getall')
+    },
+    uploadExcelData(e){
+      this.execlData = e
     },
     resetForm (formName) {
       this.$refs[formName].resetFields();
@@ -366,7 +411,11 @@ export default {
       }
     },
     changeStatueList () {
-      this.multipleSelection
+      if (this.pf(this.multipleSelection)) {
+        this.$message.error('请保证所激活设备为同一订单')
+      } else {
+        console.log(11);
+      }
     },
     getNowTime() {
        var now = new Date();
@@ -382,8 +431,8 @@ export default {
     orderitemsAdd() {
       this.flag = 'add'
       this.id = 0
-      this.modelsForm = {}
-      this.dialogFormVisible = true
+      this.modelsAddForm = {}
+      this.dialogAddFormVisible = true
     },
     orderitemsEdit(flag,item) {
       this.id = item.id

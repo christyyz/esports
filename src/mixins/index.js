@@ -13,6 +13,13 @@ const mixin = {
     }
   },
   methods: {
+    pf (arr) {  // 判断是否是同一个订单
+        var set = new Set;
+        arr.forEach(function(v){
+          set.add(v.orderFormNo)
+        });
+        return set.size > 1
+    },
     handleSelectionChange(val) {
       this.multipleSelection = val;
     },

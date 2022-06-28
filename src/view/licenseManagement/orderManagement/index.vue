@@ -268,21 +268,22 @@
         </div>
       </el-dialog>
       <el-dialog title="订单导出" :visible.sync="dialogFormVisible1">
-        <el-form :inline="true" :model="orderFormExport" label-width="85px">
+        <el-form :inline="true" :model="orderFormExport" label-width="85px" :rules="exportRules" ref="orderFormExport">
           <el-row>
-            <el-form-item label="订单号：">
+            <el-form-item label="订单号：" prop="orderFormNo">
               <el-input v-model="orderFormExport.orderFormNo" disabled></el-input>
             </el-form-item>
-          </el-row>
-          <el-row>
-            <el-form-item label="设备数量：">
+            <el-form-item label="客户名称：" prop="customerName">
+              <el-input v-model="orderFormExport.customerName" disabled></el-input>
+            </el-form-item>
+            <el-form-item label="设备数量：" prop="deviceNumber">
               <el-input-number v-model="orderFormExport.deviceNumber" :min="1" label="描述文字" style="width:210px" disabled></el-input-number>
             </el-form-item>
           </el-row>
           <el-row>
-            <el-form-item label="有效时间：">
+            <el-form-item label="有效时间：" prop="serverTime">
               <el-date-picker
-                v-model="orderFormExport.time"
+                v-model="orderFormExport.serverTime"
                 type="daterange"
                 range-separator="至"
                 start-placeholder="开始日期"
@@ -290,11 +291,11 @@
               </el-date-picker>
             </el-form-item>
           </el-row>
-          <el-row type="flex" justify="" >
+          <!-- <el-row type="flex" justify="" >
             <el-form-item label="许可ID：">
               <el-input v-model="orderFormExport.license" disabled></el-input>
             </el-form-item>
-          </el-row>
+          </el-row> -->
         </el-form>
         <div slot="footer" class="dialog-footer">
           <el-button @click="dialogFormVisible1 = false">取 消</el-button>
@@ -393,6 +394,23 @@ export default {
           { required: true, message: '请输入创建时间', trigger: 'blur' }
         ],
         
+      },
+      exportRules: {
+        orderFormNo: [
+          { required: true, message: '请输入订单号', trigger: 'blur' },
+        ],
+        projectName: [
+          { required: true, message: '请输入项目名称', trigger: 'blur' }
+        ],
+        customerName: [
+          { required: true, message: '请输入客户名称', trigger: 'blur' }
+        ],
+        deviceNumber: [
+          { required: true, message: '请输入设备数量', trigger: 'blur' }
+        ],
+        serverTime: [
+          { required: true, message: '请输入有效时间', trigger: 'blur' }
+        ],
       }
     }
   },
@@ -559,7 +577,41 @@ export default {
       this.dialogFormVisible = true
     },
     getLicense () {
+      this.$refs['orderFormExport'].validate(async (valid) => {
+        if (valid) {
+          console.log(1231113);
+          const orderFormExport = JSON.parse(JSON.stringify(this.orderFormExport))
+          orderFormExport.serviceStartDate = orderFormExport.serverTime[0]
+          orderFormExport.serviceEndDate = orderFormExport.serverTime[1]
+          console.log(orderFormExport,'orderFormExport');
+          await this.$post('order/update',orderFormExport)
+          const exportList = {}
+          const subName = ['orderFormNo','customerName','deviceNumber','serviceStartDate','serviceEndDate']
+          const Header = [['订单号','客户名称','设备总数','订单生效时间','订单结束时间']]
+          subName.forEach(item => {
+            if (item == 'serviceStartDate' || item == 'serviceEndDate') {
+              exportList[item] = moment(orderFormExport[item]).format('YYYY-MM-DD')
+            } else {
+              exportList[item] = orderFormExport[item]
+            }
+          })
+          console.log(exportList,'1211');
+          // 将JS数据数组转换为工作表。
+          const headerWs = XLSX.utils.aoa_to_sheet(Header);
+          const ws = XLSX.utils.sheet_add_json(headerWs, [exportList], {skipHeader: true, origin: 'A2'});
+          console.log(ws,'ws');
 
+          /* 新建空的工作表 */
+          const wb = XLSX.utils.book_new();
+
+          // 可以自定义下载之后的sheetname
+          XLSX.utils.book_append_sheet(wb, ws, '许可证明');
+
+          /* 生成xlsx文件 */
+          XLSX.writeFile(wb, '许可证明.xlsx');
+          
+        }
+      })
     },
     addOrderFormExport (item) {
       this.dialogFormVisible1 = true
