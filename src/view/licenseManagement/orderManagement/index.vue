@@ -63,7 +63,7 @@
         <el-button
           size="medium"
           type="primary"
-          @click="getTableData"
+          @click="getTableData('search')"
         >查询</el-button>
         <el-button
           size="medium"
@@ -122,35 +122,54 @@
         <el-table-column
           label="订单号"
           width="150"
+          :show-overflow-tooltip="true"
         >
           <template slot-scope="scope">
-            <a href="javascript:;" @click="routerModels(scope.row)">{{scope.row.orderFormNo}}</a>
+            <a href="javascript:;" @click="routerModels(scope.row,'orderFormNo')">{{scope.row.orderFormNo}}</a>
           </template>
         </el-table-column>
         <el-table-column
           prop="projectName"
           label="项目名称"
           width="150"
+          :show-overflow-tooltip="true"
         >
         </el-table-column>
         <el-table-column
           prop="customerName"
           label="客户名称"
           width="150"
+          :show-overflow-tooltip="true"
         >
         </el-table-column>
-        <el-table-column
+        <!-- <el-table-column
           prop="deviceNumber"
           label="设备总数"
           width="120"
         >
-        </el-table-column>
+        </el-table-column> -->
         <el-table-column
           label="激活设备数"
           width="120"
         >
           <template slot-scope="scope">
-            <a href="javascript:;" @click="routerModels(scope.row)">{{scope.row.activedCount}}</a>
+            <a href="javascript:;" @click="routerModels(scope.row,'activedCount')">{{scope.row.activedCount}}</a>
+          </template>
+        </el-table-column>
+        <el-table-column
+          label="订单生效时间"
+          width="200"
+        >
+          <template slot-scope="scope">
+            <span>{{creatTime(scope.row.serviceStartDate)}}</span>
+          </template>
+        </el-table-column>
+        <el-table-column
+          label="订单结束时间"
+          width="200"
+        >
+          <template slot-scope="scope">
+            <span>{{creatTime(scope.row.serviceEndDate)}}</span>
           </template>
         </el-table-column>
         <el-table-column
@@ -185,6 +204,7 @@
           >修改</el-button>
           <el-popconfirm
             title="确定删除该设订单吗？"
+            @confirm="deleteOrder(scope.row)"
           >
             <el-button
               size="mini"
@@ -226,6 +246,16 @@
           <el-form-item label="设备数量：" prop="deviceNumber">
             <el-input-number v-model="orderForm.deviceNumber" :disabled="disabled || flag == 'edit'" :min="1" style="width:205px"></el-input-number>
           </el-form-item>
+          <el-form-item label="有效时间：" prop="serverTime">
+              <el-date-picker
+                v-model="orderForm.serverTime"
+                :disabled="disabled"
+                type="daterange"
+                range-separator="至"
+                start-placeholder="开始日期"
+                end-placeholder="结束日期">
+              </el-date-picker>
+          </el-form-item>
           <!-- <el-form-item label="创建人：" prop="createdBy">
             <el-input v-model="orderForm.createdBy" :disabled="disabled"></el-input>
           </el-form-item> -->
@@ -241,7 +271,7 @@
             <el-form-item label="设备详情：">   
               <uploadExecl :limit="1" :showFileList="false" @uploadExcelData="uploadExcelData" :disabled="disabled"></uploadExecl>
             </el-form-item>
-            <el-link icon="el-icon-warning" href="https://healthcity.lenovo.com/static/demo.xlsx" target="_blank">模板下载</el-link>
+            <el-link icon="el-icon-warning" href="/static/demo.xlsx" target="_blank">模板下载</el-link>
           </el-row>
           <el-table :data="execlData"
                     v-if="execlData.length > 0"
@@ -258,6 +288,9 @@
             <el-table-column prop="macAddr"
                              label="MAC地址">
             </el-table-column>
+            <el-table-column prop="serialNo"
+                             label="SN编码">
+            </el-table-column>
           </el-table>
         </el-form>
         <div slot="footer" class="dialog-footer" v-if="flag !=='look'">
@@ -267,8 +300,8 @@
           <el-button type="primary" @click="submitOrderForm1('orderForm','edit')" v-if="flag === 'edit'">确 定</el-button>
         </div>
       </el-dialog>
-      <el-dialog title="订单导出" :visible.sync="dialogFormVisible1">
-        <el-form :inline="true" :model="orderFormExport" label-width="85px" :rules="exportRules" ref="orderFormExport">
+      <el-dialog title="许可生成" :visible.sync="dialogFormVisible1">
+        <el-form :inline="true" :model="orderFormExport" label-width="100px" :rules="exportRules" ref="orderFormExport">
           <el-row>
             <el-form-item label="订单号：" prop="orderFormNo">
               <el-input v-model="orderFormExport.orderFormNo" disabled></el-input>
@@ -277,13 +310,14 @@
               <el-input v-model="orderFormExport.customerName" disabled></el-input>
             </el-form-item>
             <el-form-item label="设备数量：" prop="deviceNumber">
-              <el-input-number v-model="orderFormExport.deviceNumber" :min="1" label="描述文字" style="width:210px" disabled></el-input-number>
+              <el-input-number v-model="orderFormExport.deviceNumber" :min="0" label="描述文字" style="width:210px" disabled></el-input-number>
             </el-form-item>
           </el-row>
           <el-row>
             <el-form-item label="有效时间：" prop="serverTime">
               <el-date-picker
                 v-model="orderFormExport.serverTime"
+                disabled
                 type="daterange"
                 range-separator="至"
                 start-placeholder="开始日期"
@@ -333,6 +367,7 @@ export default {
         projectName: '',
         customerName: '',
         deviceNumber: '',
+        serverTime: [],
         createdBy: '',
         createdDate: ''
       },
@@ -387,6 +422,9 @@ export default {
         deviceNumber: [
           { required: true, message: '请输入设备数量', trigger: 'blur' }
         ],
+        serverTime: [
+          { required: true, message: '请输入有效时间', trigger: 'blur' }
+        ],
         createdBy: [
           { required: true, message: '请输入创建人', trigger: 'blur' }
         ],
@@ -419,11 +457,11 @@ export default {
   },
   methods: {
     creatTime (e) {
-      return moment(e).format('YYYY-MM-DD HH:mm:s')
+      return moment(e).format('YYYY-MM-DD HH:mm:ss')
     },
-    getTableData () {
+    getTableData (item) {
       console.log(this.searchForm);
-      this.getListData('/order/getall')
+      this.getListData('/order/getall',item)
     },
     resetForm (formName) {
       this.$refs[formName].resetFields();
@@ -433,8 +471,10 @@ export default {
     exportTable () {
       const exportList = []
       if (this.multipleSelection.length > 0) {
-        const subName = ['num','orderFormNo','projectName','customerName','deviceNumber','activedCount','macAddr','createdBy','createdDate']
-        const Header = [['序号','订单号','项目名称','客户名称','设备总数','激活设备数','许可id','创建人','创建时间']]
+        // const subName = ['num','orderFormNo','projectName','customerName','deviceNumber','activedCount','macAddr','createdBy','createdDate']
+        // const Header = [['序号','订单号','项目名称','客户名称','设备总数','激活设备数','许可id','创建人','创建时间']]
+        const subName = ['num','orderFormNo','projectName','customerName','activedCount','createdBy','createdDate']
+        const Header = [['序号','订单号','项目名称','客户名称','激活设备数','创建人','创建时间']]
         this.multipleSelection.forEach((item,index) => {
           let exportItem = {}
           subName.forEach(item1 => {
@@ -487,12 +527,12 @@ export default {
     resetorderFormExport(){
       this.orderFormExport = {}
     },
-    routerModels (item) {
+    routerModels (item,name) {
       this.$router.push({
         name: 'modelsManagement',
         params: {
-          orderFormNo: item.orderFormNo,
-          status: '1'
+          'order#orderFormNo': item.orderFormNo,
+          status: name == 'activedCount'?'1': ''
         }
       })
     },
@@ -500,33 +540,43 @@ export default {
       this.$refs[formName].validate(async (valid) => {
           if (valid) {
             console.log(this.execlData.length,this.orderForm.deviceNumber );
-            if (this.execlData.length > 0 && this.execlData.length == this.orderForm.deviceNumber) {
+            if (this.execlData.length > 0) {
               const params = { ...this.orderForm, orderItemsVos: this.execlData, id: this.id}
+              const orderFormExport = JSON.parse(JSON.stringify(this.orderForm))
+              orderFormExport.serviceStartDate = orderFormExport.serverTime[0]
+              orderFormExport.serviceEndDate = orderFormExport.serverTime[1]
+              orderFormExport.orderItemsVos = this.execlData
+              orderFormExport.id = this.id
               console.log(params, 'params');
-              const res = this.$post('/order/uploadexcel',params)
+              const res = this.$post('/order/uploadexcel',orderFormExport)
               if (res.code == 200) {
                 this.$message({
                   message: '添加成功',
                   type: "success",
                 });
               }
-              this.getTableData()
               this.dialogFormVisible = false
               this.resetOrderForm()
-              console.log(res, 'res');
-            } else if(this.execlData.length > 0 && this.execlData.length != this.orderForm.deviceNumber) {
-              this.$message.error('请确定设备数量与设备详情数相同')
+              setTimeout(()=>{
+                this.getTableData()
+              },500)
             } else {
               this.$message.error('请上传设备详情')
             }
+            //  else if(this.execlData.length > 0 && this.execlData.length != this.orderForm.deviceNumber) {
+            //   this.$message.error('请确定设备数量与设备详情数相同')
+            // }
           }
       });
     },
     submitOrderForm1(formName,flag){
       this.$refs[formName].validate(async (valid) => {
           if (valid) {
+            const orderFormExport = JSON.parse(JSON.stringify(this.orderForm))
+            orderFormExport.serviceStartDate = orderFormExport.serverTime[0]
+            orderFormExport.serviceEndDate = orderFormExport.serverTime[1]
             const url = (flag == 'add'?'/order/add':'order/update')
-            const res = await this.$post(url,this.orderForm)
+            const res = await this.$post(url,orderFormExport)
             console.log(res);
             if (res.code == 200) {
               this.$message({
@@ -581,10 +631,14 @@ export default {
         if (valid) {
           console.log(1231113);
           const orderFormExport = JSON.parse(JSON.stringify(this.orderFormExport))
+          console.log(1);
           orderFormExport.serviceStartDate = orderFormExport.serverTime[0]
+          console.log(2);
           orderFormExport.serviceEndDate = orderFormExport.serverTime[1]
           console.log(orderFormExport,'orderFormExport');
-          await this.$post('order/update',orderFormExport)
+          await this.$post('/order/update',orderFormExport)
+          
+          console.log(4);
           const exportList = {}
           const subName = ['orderFormNo','customerName','deviceNumber','serviceStartDate','serviceEndDate']
           const Header = [['订单号','客户名称','设备总数','订单生效时间','订单结束时间']]
@@ -613,9 +667,26 @@ export default {
         }
       })
     },
-    addOrderFormExport (item) {
+    async addOrderFormExport (item) {
       this.dialogFormVisible1 = true
-      this.orderFormExport = item
+        const params = {
+          currentPage: 0,
+          countPerPage: 10000000,
+          search: `order#orderFormNo=${item.orderFormNo}`
+        }
+        const res = await this.$get('/orderitems/getall',params)
+        const num = res.totalElements
+      
+      this.orderFormExport = {...item,deviceNumber:num,serverTime:[item.serviceStartDate,item.serviceEndDate]}
+    },
+    async deleteOrder (item) {
+      const res1 = await this.$post(`/order/deletebyid?id=${item.id}`)
+      const res2 = await this.$post(`/orderitems/deletebyorderno?orderFormNo=${item.orderFormNo}`)
+      if (res1.data && res2.data) {
+        this.$message.success(res1.msg)
+        this.pager.currentPage = 1
+        this.getTableData('search')
+      }
     }
   }
 }

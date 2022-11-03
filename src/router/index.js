@@ -1,4 +1,5 @@
 import Vue from 'vue'
+// import store from '@/store'
 import Router from 'vue-router'
 
 Vue.use(Router)
@@ -140,7 +141,8 @@ const createRouter = () => new Router({
 const router = createRouter()
 
 router.beforeEach((to, from, next) => {
-  const userName = localStorage.getItem("userName");
+  // const userName = store.state.token;
+  const userName = localStorage.getItem('userName')
   console.log(to,next,2312);
   console.log(userName,123);
   if (to.name !== 'Login' && !userName) next({ name: 'Login' })

@@ -1,7 +1,7 @@
 <template>
   <div id="userLayout">
     <div class="loginform">
-      <h2 class="topTitle">许可管理平台</h2>
+      <h2 class="topTitle">易竞运营管理平台</h2>
       <el-form
         ref="loginForm"
         :model="loginForm"
@@ -64,6 +64,7 @@
 
 <script>
 import { mapActions } from 'vuex'
+import store from '@/store'
 import getPicPath from '@/util/getPicPath'
 export default {
   name: 'login',
@@ -92,6 +93,7 @@ export default {
     return {
       lock: 'lock',
       picPath: '',
+      store,
       loginForm: {
         username: '',
         password: '',
@@ -118,7 +120,32 @@ export default {
     },
     async submitForm () {
       this.$refs.loginForm.validate(async (v) => {
-        if (v && this.loginForm.username === 'admin123' && this.loginForm.password === '123456') {
+        if (v) {
+          var params = new FormData()
+          params.append('username',this.loginForm.username)
+          params.append('password',this.loginForm.password)
+
+          const res = await this.$post('/login',this.loginForm,
+             {
+                transformRequest: [
+                  function (data) {
+                    let ret = ''
+                    for (let it in data) {
+                      // 防止数据为 null 时，转换成字符串 'null' 传给后端导致报错
+                      ret += encodeURIComponent(it) + '=' + (data[it] !== null ? encodeURIComponent(data[it]) : '') + '&'
+                    }
+                    ret = ret.substring(0, ret.lastIndexOf('&'))
+                    return ret
+                  }
+                ]
+              })
+          console.log(res);
+          // if (res.code == 200) {
+          //   this.$message.success('登陆成功')
+          //   this.$store.commit('setToken',res.data)
+          //   // localStorage.setItem('userName',this.loginForm.username)
+          //   this.$router.push({ name: 'workState' })
+          // }
           localStorage.setItem('userName',this.loginForm.username)
           this.$router.push({ name: 'workState' })
         } else {

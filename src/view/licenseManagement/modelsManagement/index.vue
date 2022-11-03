@@ -4,25 +4,26 @@
       <el-col :span="18">
         <el-form
           :inline="true"
+          ref="searchForm"
           :model="searchForm"
           class="demo-form-inline"
           label-width="85px"
         >
-          <el-form-item label="订单号">
+          <el-form-item label="订单号" prop="orderFormNo">
             <el-input
-              v-model="searchForm.orderFormNo"
+              v-model.trim="searchForm['order#orderFormNo']"
               placeholder="订单号"
             ></el-input>
           </el-form-item>
-          <el-form-item label="项目名称">
+          <el-form-item label="设备名称" prop="deviceName">
             <el-input
-              v-model="searchForm.projectName"
-              placeholder="项目名称"
+              v-model.trim="searchForm.deviceName"
+              placeholder="设备名称"
             ></el-input>
           </el-form-item>
-          <el-form-item label="设备型号">
+          <el-form-item label="设备型号" prop="modelNo">
             <el-input
-              v-model="searchForm.modelNo"
+              v-model.trim="searchForm.modelNo"
               placeholder="设备型号"
             ></el-input>
           </el-form-item>
@@ -35,20 +36,21 @@
               class="selectMode"
               v-if="!isUpDown"
             >
-              <el-form-item label="MAC地址">
+              <el-form-item label="MAC地址" prop="macAddr">
                 <el-input
-                  v-model="searchForm.macAddr"
+                  v-model.trim="searchForm.macAddr"
                   placeholder="MAC地址"
                 ></el-input>
               </el-form-item>
-              <el-form-item label="当前状态">
+              <el-form-item label="当前状态" prop="status">
                   <el-select v-model="searchForm.status" placeholder="请选择" style="width:200px">
+                    <el-option label="全部" value=""></el-option>
                     <el-option label="未激活" value="0"></el-option>
                     <el-option label="已激活" value="1"></el-option>
-                    <el-option label="已停止" value="2"></el-option>
+                    <!-- <el-option label="已停止" value="2"></el-option> -->
                   </el-select>
               </el-form-item>
-              <el-form-item label="创建时间">
+              <el-form-item label="创建时间" prop="createdDate">
                 <el-date-picker
                   v-model="searchForm.createdDate"
                   type="daterange"
@@ -70,7 +72,7 @@
         <el-button
           size="medium"
           type="primary"
-          @click="getTableData"
+          @click="getTableData('search')"
         >查询</el-button>
         <el-button
           size="medium"
@@ -115,6 +117,7 @@
         prop="orderFormNo"
         label="订单号"
         width="120"
+        :show-overflow-tooltip="true"
       >
       </el-table-column>
       <el-table-column
@@ -128,12 +131,21 @@
         prop="modelNo"
         label="设备型号"
         width="180"
+        :show-overflow-tooltip="true"
       >
       </el-table-column>
       <el-table-column
         prop="macAddr"
         label="MAC地址"
         width="180"
+        :show-overflow-tooltip="true"
+      >
+      </el-table-column>
+      <el-table-column
+        prop="serialNo"
+        label="SN编码"
+        width="180"
+        :show-overflow-tooltip="true"
       >
       </el-table-column>
       <el-table-column
@@ -143,7 +155,7 @@
         <template slot-scope="scope">
           <el-button size="mini" type="primary" v-if="scope.row.status == '0' || !scope.row.status" @click="changeStatus(scope.row)">待激活</el-button>
           <el-button size="mini" type="success" v-if="scope.row.status == '1'">已激活</el-button>
-          <el-button size="mini" type="danger" v-if="scope.row.status == '2'">已停止</el-button>
+          <!-- <el-button size="mini" type="danger" v-if="scope.row.status == '2'">已停止</el-button> -->
         </template>
       </el-table-column>
       <el-table-column
@@ -154,7 +166,7 @@
             <span>{{creatTime(scope.row.createdDate)}}</span>
           </template>
       </el-table-column>
-      <el-table-column label="操作">
+      <el-table-column label="操作" fixed="right" width="200">
         <template slot-scope="scope">
           <el-button
             size="mini"
@@ -162,13 +174,14 @@
             @click="orderitemsEdit('edit',scope.row)"
           >修改</el-button>
           <el-popconfirm
-            title="确定停止该设备吗？"
+            title="确定删除该设备吗？"
+            @confirm="deleteOrderItem(scope.row)"
           >
             <el-button
               size="mini"
               type="warning"
               style="margin: 0 10px"
-              slot="reference">停止</el-button>
+              slot="reference">删除</el-button>
           </el-popconfirm>
           <el-button
             size="mini"
@@ -193,13 +206,13 @@
     <el-dialog title="新增设备" :visible.sync="dialogAddFormVisible">
       <el-form :inline="true" :model="modelsAddForm" label-width="100px" :rules="rules" ref="modelsAddForm">
         <el-form-item label="订单号：" prop="orderFormNo">
-          <el-input v-model="modelsAddForm.orderFormNo" :disabled="flag == 'look' || flag == 'edit'"></el-input>
+          <el-input v-model="modelsAddForm.orderFormNo"></el-input>
         </el-form-item>
           <el-row>
             <el-form-item label="设备详情：">   
               <uploadExecl :limit="1" :showFileList="false" @uploadExcelData="uploadExcelData"></uploadExecl>
             </el-form-item>
-            <el-link icon="el-icon-warning" href="https://healthcity.lenovo.com/static/demo.xlsx" target="_blank">模板下载</el-link>
+            <el-link icon="el-icon-warning" href="/static/demo.xlsx" target="_blank">模板下载</el-link>
           </el-row>
           <el-table :data="execlData"
                     v-if="execlData.length > 0"
@@ -216,9 +229,12 @@
             <el-table-column prop="macAddr"
                              label="MAC地址">
             </el-table-column>
+            <el-table-column prop="serialNo"
+                             label="SN编码">
+            </el-table-column>
           </el-table>
       </el-form>
-      <div slot="footer" class="dialog-footer" v-if="flag !== 'look'">
+      <div slot="footer" class="dialog-footer">
         <el-button @click="dialogAddFormVisible = false">取 消</el-button>
         <el-button type="primary" @click="modelsAddFormSubmit('modelsForm')">确 定</el-button>
       </div>
@@ -237,11 +253,14 @@
         <el-form-item label="mac地址：" prop="macAddr">
           <el-input v-model="modelsForm.macAddr" :disabled="flag == 'look'"></el-input>
         </el-form-item>
+        <el-form-item label="SN编码" prop="serialNo">
+          <el-input v-model="modelsForm.serialNo" :disabled="flag == 'look'"></el-input>
+        </el-form-item>
         <el-form-item label="当前状态：" prop="status">
           <el-select v-model="modelsForm.status" placeholder="请选择" style="width:205px" :disabled="flag == 'look'">
             <el-option label="未激活" value="0"></el-option>
             <el-option label="已激活" value="1"></el-option>
-            <el-option label="已停止" value="2"></el-option>
+            <!-- <el-option label="已停止" value="2"></el-option> -->
           </el-select>
         </el-form-item>
         <!-- <el-form-item label="创建时间：" prop="createdDate">
@@ -275,7 +294,7 @@ export default {
   data () {
     return {
       searchForm: {
-        orderFormNo: '',
+        'order#orderFormNo': '',
         projectName: '',
         modelNo: '',
         macAddr: '',
@@ -292,6 +311,9 @@ export default {
       },
       modelsAddForm: {
         orderFormNo: '',
+        projectName: '',
+        customerName: '',
+        deviceNumber: ''
       },
       execlData: [],
       formData: [],
@@ -302,14 +324,23 @@ export default {
         orderFormNo: [
           { required: true, message: '请输入订单号', trigger: 'blur' },
         ],
-        deviceName: [
-          { required: true, message: '请输入项目名称', trigger: 'blur' }
+        projectName: [
+          { required: true, message: '请输入项目名称', trigger: 'blur' },
+        ],
+        customerName: [
+          { required: true, message: '请输入设备名称', trigger: 'blur' },
+        ],
+        deviceNumber: [
+          { required: true, message: '请输入设备数量', trigger: 'blur' }
         ],
         modelNo: [
           { required: true, message: '请输入设备类型', trigger: 'blur' }
         ],
         macAddr: [
           { required: true, message: '请输入MAC地址', trigger: 'blur' }
+        ],
+        serialNo: [
+          { required: true, message: '请输入SN编码', trigger: 'blur' }
         ],
         status: [
           { required: true, message: '请选择当前状态', trigger: 'blur' }
@@ -346,17 +377,24 @@ export default {
   },
   methods: {
     creatTime (e) {
-      return moment(e).format('YYYY-MM-DD HH:mm:s')
+      return moment(e).format('YYYY-MM-DD HH:mm:ss')
     },
-    getTableData () {
-      this.getListData('/orderitems/getall')
+    getTableData (item) {
+      this.getListData('/orderitems/getall',item)
     },
     uploadExcelData(e){
       this.execlData = e
     },
     resetForm (formName) {
       this.$refs[formName].resetFields();
-      this.searchForm.createdDate = []
+      this.searchForm = {
+        'order#orderFormNo': '',
+        projectName: '',
+        modelNo: '',
+        macAddr: '',
+        status: '',
+        createdDate: []
+      },
       this.getTableData()
     },
     statusName(item){
@@ -374,12 +412,45 @@ export default {
       }
       return statusName
     },
-    exportTable () {
+    async exportTable () {
       const exportList = []
+      let dataList = []
       if (this.multipleSelection.length > 0) {
+        dataList = this.multipleSelection
+      } else {
+        let searchForm = {
+          ...this.searchForm,
+          createdDate: this.searchForm.createdDate.length > 0 ? [moment(this.searchForm.createdDate[0]).format('YYYYMMDD'),moment(this.searchForm.createdDate[1]).format('YYYYMMDD')] : ''
+        }
+        let searchStr = ''
+        if (JSON.stringify(searchForm) !== '{}') {
+          for (let i in searchForm) {
+            console.log(i);
+            if (searchForm[i]) {
+              if (i == 'projectName' || i == 'customerName' || i == 'deviceName') {
+                console.log(searchForm, searchForm[i]);
+                searchStr += `${i}:${searchForm[i]},`
+              } else if (i == 'createdDate') {
+                console.log(searchForm[i]);
+                searchStr += searchForm[i].length > 0 ? `${searchForm[i][0]}<createdDate<${searchForm[i][1]},` : ''
+              } else {
+                searchStr += `${i}=${searchForm[i]},`
+              }
+            }
+          }
+        }
+        const params = {
+          currentPage: 0,
+          countPerPage: 10000000,
+          search: JSON.stringify(searchForm) !== '{}'? searchStr : null
+        }
+        const res = await this.$get('/orderitems/getall',params)
+        dataList = res.pageData
+      }
+      console.log(dataList,'dataList');
         const subName = ['num','orderFormNo','deviceName','modelNo','macAddr','status','createdDate']
         const Header = [['序号','订单号','设备名称','设备型号','MAC地址','当前状态','创建时间']]
-        this.multipleSelection.forEach((item,index) => {
+        dataList.forEach((item,index) => {
           let exportItem = {}
           subName.forEach(item1 => {
             if (item1 == 'num') {
@@ -408,13 +479,56 @@ export default {
 
         /* 生成xlsx文件 */
         XLSX.writeFile(wb, '订单表格.xlsx');
+    },
+    async getDataList () {
+      let searchForm = {
+        ...this.searchForm,
+        createdDate: this.searchForm.createdDate.length > 0 ? [moment(this.searchForm.createdDate[0]).format('YYYYMMDD'),moment(this.searchForm.createdDate[1]).format('YYYYMMDD')] : ''
       }
+      let searchStr = ''
+      if (JSON.stringify(searchForm) !== '{}') {
+        for (let i in searchForm) {
+          console.log(i);
+          if (searchForm[i]) {
+            if (i == 'projectName' || i == 'customerName' || i == 'deviceName') {
+              console.log(searchForm, searchForm[i]);
+              searchStr += `${i}:${searchForm[i]},`
+            } else if (i == 'createdDate') {
+              console.log(searchForm[i]);
+              searchStr += searchForm[i].length > 0 ? `${searchForm[i][0]}<createdDate<${searchForm[i][1]},` : ''
+            } else {
+              searchStr += `${i}=${searchForm[i]},`
+            }
+          }
+        }
+      }
+      const params = {
+        currentPage: 0,
+        countPerPage: 10000000,
+        search: JSON.stringify(searchForm) !== '{}'? searchStr : null
+      }
+      const res = await this.$get('/orderitems/getall',params)
+      return res.pageData
+    },
+    rowKey(row) {
+        // console.log('================:', JSON.stringify(row))
+        return row.id
     },
     changeStatueList () {
       if (this.pf(this.multipleSelection)) {
         this.$message.error('请保证所激活设备为同一订单')
       } else {
-        console.log(11);
+        this.multipleSelection.forEach(async (item,index) => {
+          const params = {...item, status: 1}
+          let res = await this.$post('/orderitems/update',params)
+          if (index == this.multipleSelection.length - 1 && res.code == 200) {
+            this.$message({
+              message: '激活成功',
+              type: "success",
+            });
+            this.getTableData()
+          }
+        })
       }
     },
     getNowTime() {
@@ -469,6 +583,35 @@ export default {
             this.dialogFormVisible = false
           }
       });
+    },
+    modelsAddFormSubmit () {
+      this.$refs['modelsAddForm'].validate(async (valid) => {
+        if (valid) {
+          if (this.execlData.length > 0) {
+            const params = {...this.modelsAddForm, orderItemsVos: this.execlData}
+            const res = await this.$post('/order/batchadditems',params)
+              if (res.code == 200) {
+                this.$message({
+                  message: '添加成功',
+                  type: "success",
+                });
+              }
+              this.dialogAddFormVisible = false
+              this.getTableData()
+          } else {
+            this.$message.error('请上传设备信息')
+          }
+        }
+      })
+    },
+    async deleteOrderItem (item) {
+      const res = await this.$post(`/orderitems/deletebyid?id=${item.id}`)
+      console.log(res);
+      if (res.data) {
+        this.$message.success(res.msg)
+        this.pager.currentPage = 1
+        this.getTableData('search')
+      }
     }
   }
 }

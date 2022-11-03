@@ -64,7 +64,7 @@ export default {
     generateData({header, results}) {
         // this.excelData.header = header;
         // this.excelData.results = results;
-        const execlList = this.changeName(results,['deviceName','modelNo','macAddr'])
+        const execlList = this.changeName(results,['deviceName','modelNo','macAddr','serialNo'])
         console.log(execlList, '数据列表');
         this.$emit('uploadExcelData', execlList);
         this.fileList = [];

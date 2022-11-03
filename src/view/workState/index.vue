@@ -1,8 +1,25 @@
 <template>
   <div class="big">
-    <el-row class="topInfo">
+    <div class="typeCardList">
+      <div
+        v-for="(item,index) in cardList"
+        :key="item.title1"
+        :class="`typeCard color${index}`"
+      >
+        <p class="titleBox">
+          <span></span>
+          {{item.title1}}
+        </p>
+        <div class="contentBox">
+          <div>
+            <span class="numStyle">{{item.num}}</span>{{item.title1=='订单数'?'单':'台'}}
+          </div>
+        </div>
+      </div>
+    </div>
+    <!-- <el-row class="topInfo">
       <cardType :cardList="cardList"></cardType>
-    </el-row>
+    </el-row> -->
     <!-- <div class="shadow">
       <el-row :gutter="20">
         <el-col
@@ -19,7 +36,7 @@
         </el-col>
       </el-row>
     </div> -->
-    <el-row class="echartsBox">
+    <!-- <el-row class="echartsBox">
       <el-col :xs="24" :sm="24" :md='18' class="boxLeft">
         <el-col :xs="24" :sm="24" :md='12'>
           <div id="activeRate" class="activeRate"></div>
@@ -30,19 +47,6 @@
         <el-col :xs="24" :sm="24" :md='24'>
           <div id="activetime" class="activetime"></div>
         </el-col>
-        <!-- <div id="activeRate" class="activeRate"></div>
-        <div id="subjectTim" class="subjectTim">
-          <template>
-            <el-select v-model="value" placeholder="请选择">
-              <el-option
-                v-for="item in options"
-                :key="item.value"
-                :label="item.label"
-                :value="item.value">
-              </el-option>
-            </el-select>
-          </template>
-        </div> -->
       </el-col>
       <el-col :xs="24" :sm="24" :md='6' class="boxRight">
         <div id="activeRanking" class="activeRanking">
@@ -55,7 +59,7 @@
           </ul>
         </div>
       </el-col>
-    </el-row>
+    </el-row> -->
   </div>
 </template>
 
@@ -76,22 +80,22 @@ export default {
         {
           id: '1',
           title1: '订单数',
-          num: 1000
+          num: 0
         },
         {
           id: '2',
           title1: '设备总数',
-          num: 2500
+          num: 0
         },
         {
           id: '3',
           title1: '已激活设备',
-          num: 1000
+          num: 0
         },
         {
           id: '4',
           title1: '未激活设备',
-          num: 1500
+          num: 0
         },
       ],
       // toolCards: [
@@ -206,29 +210,71 @@ export default {
     ...mapGetters(['userInfo']),
   },
   mounted () {
-    const screenWidth = document.body.clientWidth
+    // const screenWidth = document.body.clientWidth
 
-    if (screenWidth < 1000) {
-      this.leftWidth = screenWidth - 40 + 'px'
-    } else {
-      this.leftWidth = null
-    }
-    this.bus.$on('collapse', item => {
-      setTimeout(() => {
-        console.log(12311);
-        this.activeRateCharts()
-        this.modelsRateCharts()
-        this.activetimeCharts()
-      },300)
-    })
-    this.activeRateCharts()
-    this.modelsRateCharts()
-    this.activetimeCharts()
+    // if (screenWidth < 1000) {
+    //   this.leftWidth = screenWidth - 40 + 'px'
+    // } else {
+    //   this.leftWidth = null
+    // }
+    // this.bus.$on('collapse', item => {
+    //   setTimeout(() => {
+    //     console.log(12311);
+    //     this.activeRateCharts()
+    //     this.modelsRateCharts()
+    //     this.activetimeCharts()
+    //   },300)
+    // })
+    // this.activeRateCharts()
+    // this.modelsRateCharts()
+    // this.activetimeCharts()
+    this.getTotleOrder()
+    this.getTotleModels()
+    this.getTotleModels1()
+    this.getTotleModels2()
+  },
+  activated () {
+    this.getTotleOrder()
+    this.getTotleModels()
+    this.getTotleModels1()
+    this.getTotleModels2()
   },
   methods: {
     // toTarget(name) {
     //   this.$router.push({ name })
     // },
+    async getTotleOrder () {
+      const res = await this.$get('/order/getall',{
+        currentPage: 0,
+        countPerPage: 10,
+        search: null
+      })
+      this.cardList[0].num = res.totalElements
+    },
+    async getTotleModels () {
+      const res = await this.$get('/orderitems/getall',{
+        currentPage: 0,
+        countPerPage: 10,
+        search: null
+      })
+      this.cardList[1].num = res.totalElements
+    },
+    async getTotleModels1 () {
+      const res = await this.$get('/orderitems/getall',{
+        currentPage: 0,
+        countPerPage: 10,
+        search: `status=1`
+      })
+      this.cardList[2].num = res.totalElements
+    },
+    async getTotleModels2 () {
+      const res = await this.$get('/orderitems/getall',{
+        currentPage: 0,
+        countPerPage: 10,
+        search: `status=0`
+      })
+      this.cardList[3].num = res.totalElements
+    },
     activeRateCharts () {
       if (myChart1 != null && myChart1 != "" && myChart1 != undefined) {
         myChart1.dispose(); //销毁
@@ -499,14 +545,61 @@ export default {
     }
   }
 }
-@media (max-width: 1000px) {
-  .big {
-    .echartsBox {
-      .boxRight {
-        border-left: 0;
-        border-top: 10px solid #eeeeee;
+.typeCardList {
+  display: flex;
+  flex-wrap: wrap;
+  height: calc(100vh - 150px);
+  justify-content: space-evenly;
+  align-items: center;
+  color: #ffffff;
+  .typeCard {
+    width: calc(40% - 14px);
+    min-height: 200px;
+    padding: 0 10px;
+    margin: 0 10px 10px;
+    border-radius: 10px;
+    .titleBox {
+      margin: 5px 0px;
+      text-align: left;
+      display: flex;
+      align-items: center;
+      span {
+        height: 10px;
+        width: 3px;
+        background-color: #fff;
+        margin-right: 10px;
+      }
+    }
+    .contentBox {
+      display: flex;
+      margin-top: 5px;
+      justify-content: space-around;
+      .numStyle {
+        line-height: 150px;
+        font-size: 40px;
+        padding-right: 10px;
       }
     }
   }
 }
+
+@media screen and (max-width:1200px) {
+  .typeCardList .typeCard {
+    width: calc(100% - 60px);
+    min-height: 100px;
+    .contentBox .numStyle {
+      line-height: 80px;
+    }
+  }
+} 
+// @media (max-width: 1000px) {
+//   .big {
+//     .echartsBox {
+//       .boxRight {
+//         border-left: 0;
+//         border-top: 10px solid #eeeeee;
+//       }
+//     }
+//   }
+// }
 </style>

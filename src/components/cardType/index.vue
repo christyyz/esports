@@ -82,22 +82,4 @@ export default {
     width: calc(100% - 60px);
   }
 } 
-.color0 {
-  background-image: linear-gradient(to right, #ff823c, #ff9a1b);
-}
-.color1 {
-  background-image: linear-gradient(to right, #f9bd39, #f2cc09);
-}
-.color2 {
-  background-image: linear-gradient(to right, #476cea, #519efe);
-}
-.color3 {
-  background-image: linear-gradient(to right, #77ad04, #79d728);
-}
-.color4 {
-  background-image: linear-gradient(to right, #05aeee, #23b8dd);
-}
-.color5 {
-  background-image: linear-gradient(to right, #f34c40, #ee7e76);
-}
 </style>

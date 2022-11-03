@@ -15,7 +15,7 @@
           <p
             v-if="isSider"
             class="tit-text"
-          >许可管理系统</p>
+          >易竞运营管理平台</p>
         </div>
         <Aside class="aside" />
       </el-aside>

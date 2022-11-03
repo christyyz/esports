@@ -18,6 +18,7 @@ const mixin = {
         arr.forEach(function(v){
           set.add(v.orderFormNo)
         });
+        console.log(set,'set');
         return set.size > 1
     },
     handleSelectionChange(val) {
@@ -46,48 +47,41 @@ const mixin = {
       console.log(oldFormData, newFormData);
       const newFormData1 = JSON.parse(JSON.stringify(newFormData))
       for ( let i in newFormData1) {
-        this.$set(oldFormData, i, newFormData1[i])
+        if (i == 'serviceStartDate' || i == 'serviceEndDate') {
+          this.$set(oldFormData, 'serverTime', [newFormData1.serviceStartDate,newFormData1.serviceEndDate])
+        } else {
+          this.$set(oldFormData, i, newFormData1[i])
+        }
+        
       }
     },
-    async getListData (url) {
-      // orderFormNo
-      // projectName
-      // customerName
-      // createdBy
-      // createdDate
-      // orderFormNo
-      // projectName
-      // modelNo
-      // macAddr
-      // status
-      // createdDate
+    async getListData (url,item) {
       this.loadInfo = '数据加载中...'
       console.log(this.searchForm);
       let searchForm = {
         ...this.searchForm,
         createdDate: this.searchForm.createdDate.length > 0 ? [moment(this.searchForm.createdDate[0]).format('YYYYMMDD'),moment(this.searchForm.createdDate[1]).format('YYYYMMDD')] : ''
       }
-      console.log(searchForm, 'searchForm123');
       let searchStr = ''
       if (JSON.stringify(searchForm) !== '{}') {
         for (let i in searchForm) {
           console.log(i);
           if (searchForm[i]) {
-            if (i == 'projectName' || i == 'customerName') {
+            if (i == 'projectName' || i == 'customerName' || i == 'deviceName') {
               console.log(searchForm, searchForm[i]);
-              searchStr += `${i}:${searchForm[i]}`
+              searchStr += `${i}:${searchForm[i]},`
             } else if (i == 'createdDate') {
               console.log(searchForm[i]);
-              searchStr += searchForm[i].length > 0 ? `${searchForm[i][0]}<createdDate<${searchForm[i][1]}` : ''
+              searchStr += searchForm[i].length > 0 ? `${searchForm[i][0]}<createdDate<${searchForm[i][1]},` : ''
             } else {
-              searchStr += `${i}=${searchForm[i]}`
+              searchStr += `${i}=${searchForm[i]},`
             }
           }
         }
       }
       console.log(searchStr,'searchStr');
       const params = {
-        currentPage: this.pager.currentPage - 1,
+        currentPage: item == 'search'? 0 : this.pager.currentPage - 1,
         countPerPage: this.pager.countPerPage,
         search: JSON.stringify(searchForm) !== '{}'? searchStr : null
       }
