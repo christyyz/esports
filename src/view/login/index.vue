@@ -45,7 +45,7 @@
               :src="picPath"
               height="30px"
               alt="请输入验证码"
-              @click="loginVerify()"
+              @click="loginVerify"
             >
           </div>
          </div>
@@ -65,7 +65,6 @@
 <script>
 import { mapActions } from 'vuex'
 import store from '@/store'
-import getPicPath from '@/util/getPicPath'
 export default {
   name: 'login',
   data () {
@@ -84,8 +83,8 @@ export default {
       }
     }
     const checkCaptcha = (rule, value, callback) => {
-      if (value.length < 4) {
-        return callback(new Error('请输入正确的密码'))
+      if (value.length < 5) {
+        return callback(new Error('请输入正确的验证码'))
       } else {
         callback()
       }
@@ -107,13 +106,22 @@ export default {
       },
     }
   },
-  created () {
+  async created () {
     this.loginVerify()
   },
   methods: {
     ...mapActions('user', ['LoginIn']),
     changeLock () {
       this.lock = this.lock === 'lock' ? 'unlock' : 'lock'
+    },
+    async loginVerify () {
+      this.picPath = ''
+      const res = await this.$get('/captcha', {}, { responseType: 'blob' }).then( res => {
+        return res.data
+      }).catch( err => {
+        console.error(err)
+      })
+      this.picPath = 'http://localhost:8081/apis/captcha'
     },
     async login () {
       return await this.LoginIn(this.loginForm)
@@ -139,15 +147,23 @@ export default {
                   }
                 ]
               })
-          console.log(res);
-          // if (res.code == 200) {
+          // console.log(res);          // if (res.code == 200) {
           //   this.$message.success('登陆成功')
           //   this.$store.commit('setToken',res.data)
           //   // localStorage.setItem('userName',this.loginForm.username)
           //   this.$router.push({ name: 'workState' })
           // }
-          localStorage.setItem('userName',this.loginForm.username)
-          this.$router.push({ name: 'workState' })
+          if(res.msg === '登录成功'){
+            localStorage.setItem('userName',this.loginForm.username)
+            this.$router.push({ name: 'workState' })
+          }else {
+            this.$message({
+              type: 'error',
+              message: '请输入正确的验证码',
+              showClose: true
+            })
+            return false
+          }
         } else {
           this.$message({
             type: 'error',
@@ -157,12 +173,8 @@ export default {
           return false
         }
       })
-    },
-    loginVerify () {
-      let num = Math.ceil(Math.random() * 10)
-      this.picPath = getPicPath(num)
     }
-  },
+  }
 }
 </script>
 
