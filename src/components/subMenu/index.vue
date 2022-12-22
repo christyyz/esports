@@ -8,7 +8,7 @@
                 </template>
                 <MenuTree :menuData="item.children"></MenuTree> 
             </el-submenu>
-            <el-menu-item v-else :key="item.id" :index="item.id+''" @click="selectAsideList(item)">
+            <el-menu-item v-else :key="item.id+1" :index="item.id+''" @click="selectAsideList(item)">
               <i :class="`el-icon-${item.icon}`"></i>
               <span slot="title">{{item.title}}</span>
             </el-menu-item>

@@ -142,12 +142,12 @@
           :show-overflow-tooltip="true"
         >
         </el-table-column>
-        <!-- <el-table-column
+        <el-table-column
           prop="deviceNumber"
           label="设备总数"
           width="120"
         >
-        </el-table-column> -->
+        </el-table-column>
         <el-table-column
           label="激活设备数"
           width="120"
