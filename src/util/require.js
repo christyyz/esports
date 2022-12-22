@@ -120,7 +120,9 @@ const get = function (url,params) {
         } else {
           resolve(res.data.data)
         }
-      } else {
+      }else if(res.status == 200) {
+        resolve(res)
+      }else {
         console.log(res,'error')
         this.$message({
           message: res.data.msg,

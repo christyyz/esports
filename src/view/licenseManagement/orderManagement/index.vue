@@ -346,6 +346,7 @@ import mixin from '@/mixins'
 import moment from 'moment'
 import * as XLSX from 'xlsx'
 import uploadExecl from '@/components/uploadExecl/index'
+import { basePath } from '../../../util/base'
 export default {
   name: 'licenseManagement',
   mixins: [mixin],
@@ -629,19 +630,13 @@ export default {
     getLicense () {
       this.$refs['orderFormExport'].validate(async (valid) => {
         if (valid) {
-          console.log(1231113);
           const orderFormExport = JSON.parse(JSON.stringify(this.orderFormExport))
-          console.log(1);
           orderFormExport.serviceStartDate = orderFormExport.serverTime[0]
-          console.log(2);
           orderFormExport.serviceEndDate = orderFormExport.serverTime[1]
-          console.log(orderFormExport,'orderFormExport');
           await this.$post('/order/update',orderFormExport)
           
-          console.log(4);
           const exportList = {}
-          const subName = ['orderFormNo','customerName','deviceNumber','serviceStartDate','serviceEndDate']
-          const Header = [['订单号','客户名称','设备总数','订单生效时间','订单结束时间']]
+          const subName = ['orderFormNo','deviceNumber','serviceStartDate','serviceEndDate']
           subName.forEach(item => {
             if (item == 'serviceStartDate' || item == 'serviceEndDate') {
               exportList[item] = moment(orderFormExport[item]).format('YYYY-MM-DD')
@@ -649,20 +644,31 @@ export default {
               exportList[item] = orderFormExport[item]
             }
           })
-          console.log(exportList,'1211');
-          // 将JS数据数组转换为工作表。
-          const headerWs = XLSX.utils.aoa_to_sheet(Header);
-          const ws = XLSX.utils.sheet_add_json(headerWs, [exportList], {skipHeader: true, origin: 'A2'});
-          console.log(ws,'ws');
 
-          /* 新建空的工作表 */
-          const wb = XLSX.utils.book_new();
+          const devices = await this.$get('/orderitems/getall')
+            .then(res => res.pageData)
+            .catch(err => err)
+          const deviceMacAddr = []
+          devices.forEach(device => {
+            if(device.orderFormNo === exportList['orderFormNo'])
+              deviceMacAddr.push(device.macAddr)
+          })
+          exportList['macAddr'] = deviceMacAddr.join(',')
 
-          // 可以自定义下载之后的sheetname
-          XLSX.utils.book_append_sheet(wb, ws, '许可证明');
+          const flag = await this.$post('/license/generateLicense', exportList).then(res => {
+            return res
+          }).catch(err => {
+            alert(err)
+          })
 
-          /* 生成xlsx文件 */
-          XLSX.writeFile(wb, '许可证明.xlsx');
+          if(flag){
+            await this.$get('/license/getLicense').then(res => {
+              const a = document.createElement('a')
+              a.href = `${basePath}/license/getLicense`
+              a.click()
+            }).catch(err => alert(err))
+          }
+          
           
         }
       })
