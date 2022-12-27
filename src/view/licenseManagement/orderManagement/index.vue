@@ -658,7 +658,7 @@ export default {
           const flag = await this.$post('/license/generateLicense', exportList).then(res => {
             return res
           }).catch(err => {
-            alert(err)
+            alert(`Error generating license: ${err}`)
           })
 
           if(flag){
@@ -666,7 +666,7 @@ export default {
               const a = document.createElement('a')
               a.href = `${basePath}/license/getLicense`
               a.click()
-            }).catch(err => alert(err))
+            }).catch(err => alert(`Error fetching license: ${err}`))
           }
           
           

@@ -23,7 +23,7 @@ export const store = new Vuex.Store({
     //存放的键值对就是所要管理的状态
     user: {
       uuid: '',
-      nickName: '测试账号',
+      nickName: localStorage.getItem('userName'),
       headerImg: 'http://qmplusimg.henrongyi.top/gva_header.jpg',
       authority: '',
       ID: ''
