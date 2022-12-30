@@ -645,7 +645,11 @@ export default {
             }
           })
 
-          const devices = await this.$get('/orderitems/getall')
+          const params = {
+            'orderFormNo': exportList.orderFormNo,
+            'countPerPage': exportList.deviceNumber,
+          }
+          const devices = await this.$get('/orderitems/getallbyorderno', params)
             .then(res => res.pageData)
             .catch(err => err)
           const deviceMacAddr = []
