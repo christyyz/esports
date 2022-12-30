@@ -653,10 +653,7 @@ export default {
             .then(res => res.pageData)
             .catch(err => err)
           const deviceMacAddr = []
-          devices.forEach(device => {
-            if(device.orderFormNo === exportList['orderFormNo'])
-              deviceMacAddr.push(device.macAddr)
-          })
+          devices.forEach(device => deviceMacAddr.push(device.macAddr))
           exportList['macAddr'] = deviceMacAddr.join(',')
 
           const flag = await this.$post('/license/generateLicense', exportList).then(res => {
@@ -665,17 +662,26 @@ export default {
             alert(`Error generating license: ${err}`)
           })
 
-          if(flag){
-            await this.$get('/license/getLicense').then(res => {
-              const a = document.createElement('a')
-              a.href = `${basePath}/license/getLicense`
-              a.click()
-            }).catch(err => alert(`Error fetching license: ${err}`))
-          }
-          
-          
+          this.downloadClick(`${basePath}/license/getLicense`, `esportsLicense-${orderFormExport.customerName}.lic`)
         }
       })
+    },
+    async downloadClick(url, name) {
+      window.URL = window.URL || window.webkitURL;
+
+      var xhr = new XMLHttpRequest();
+      var a = document.createElement("a");
+      var file;
+
+      xhr.open("GET", url, true);
+      xhr.responseType = "blob";
+      xhr.onload = function() {
+        file = new Blob([xhr.response], { type: "application/octet-stream" });
+        a.href = window.URL.createObjectURL(file);
+        a.download = name;
+        a.click();
+      };
+      xhr.send();
     },
     async addOrderFormExport (item) {
       this.dialogFormVisible1 = true
