@@ -325,6 +325,15 @@
               </el-date-picker>
             </el-form-item>
           </el-row>
+          <el-row>
+            <el-form-item label="授权类型：" prop="licenseType">
+              <el-select v-model="orderFormExport.licenseType" placeholder="请选择" style="width:200px">
+                    <el-option label="试用" value="trial"></el-option>
+                    <el-option label="标准" value="standard"></el-option>
+                    <el-option label="其他" value="other"></el-option>
+              </el-select>
+            </el-form-item>
+          </el-row>
           <!-- <el-row type="flex" justify="" >
             <el-form-item label="许可ID：">
               <el-input v-model="orderFormExport.license" disabled></el-input>
@@ -449,6 +458,9 @@ export default {
         ],
         serverTime: [
           { required: true, message: '请输入有效时间', trigger: 'blur' }
+        ],
+        licenseType: [
+          { required: true, message: '请输入授权类型', trigger: 'blur' }
         ],
       }
     }
@@ -656,6 +668,8 @@ export default {
           devices.forEach(device => deviceMacAddr.push(device.macAddr))
           exportList['macAddr'] = deviceMacAddr.join(',')
 
+          exportList['licenseType'] = orderFormExport.licenseType
+
           const flag = await this.$post('/license/generateLicense', exportList).then(res => {
             return res
           }).catch(err => {
@@ -693,7 +707,7 @@ export default {
         const res = await this.$get('/orderitems/getall',params)
         const num = res.totalElements
       
-      this.orderFormExport = {...item,deviceNumber:num,serverTime:[item.serviceStartDate,item.serviceEndDate]}
+      this.orderFormExport = {...item,deviceNumber:num,serverTime:[item.serviceStartDate,item.serviceEndDate],licenseType:''}
     },
     async deleteOrder (item) {
       const res1 = await this.$post(`/order/deletebyid?id=${item.id}`)
